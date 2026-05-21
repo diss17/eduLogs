@@ -1,14 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+
 from app.database import get_db
-from app.models import Incidente, Alumno, Usuario
+from app.models import Alumno, Incidente, Usuario
 from app.schemas import (
+    AlumnoRead,
+    CategoriaEnum,
+    EstadoEnum,
     IncidenteCreate,
     IncidenteRead,
     IncidenteUpdate,
     IncidenteWithAlumnos,
-    CategoriaEnum,
-    EstadoEnum,
 )
 
 router = APIRouter(prefix="/incidentes", tags=["incidentes"])
@@ -18,7 +20,9 @@ router = APIRouter(prefix="/incidentes", tags=["incidentes"])
 def crear_incidente(incidente: IncidenteCreate, db: Session = Depends(get_db)):
     """Crear un nuevo incidente y asociar alumnos."""
     # Verificar que el funcionario existe
-    funcionario = db.query(Usuario).filter(Usuario.id == incidente.funcionario_id).first()
+    funcionario = (
+        db.query(Usuario).filter(Usuario.id == incidente.funcionario_id).first()
+    )
     if not funcionario:
         raise HTTPException(status_code=404, detail="Funcionario no encontrado")
 
@@ -36,7 +40,9 @@ def crear_incidente(incidente: IncidenteCreate, db: Session = Depends(get_db)):
     if incidente.alumno_ids:
         alumnos = db.query(Alumno).filter(Alumno.id.in_(incidente.alumno_ids)).all()
         if len(alumnos) != len(incidente.alumno_ids):
-            raise HTTPException(status_code=404, detail="Uno o más alumnos no encontrados")
+            raise HTTPException(
+                status_code=404, detail="Uno o más alumnos no encontrados"
+            )
         db_incidente.alumnos = alumnos
 
     db.add(db_incidente)
@@ -73,7 +79,7 @@ def obtener_incidente(incidente_id: int, db: Session = Depends(get_db)):
     return incidente
 
 
-@router.get("/{incidente_id}/alumnos", response_model=list)
+@router.get("/{incidente_id}/alumnos", response_model=list[AlumnoRead])
 def obtener_alumnos_incidente(incidente_id: int, db: Session = Depends(get_db)):
     """Obtener los alumnos involucrados en un incidente."""
     incidente = db.query(Incidente).filter(Incidente.id == incidente_id).first()
@@ -100,7 +106,9 @@ def actualizar_incidente(
         if alumno_ids is not None:
             alumnos = db.query(Alumno).filter(Alumno.id.in_(alumno_ids)).all()
             if len(alumnos) != len(alumno_ids):
-                raise HTTPException(status_code=404, detail="Uno o más alumnos no encontrados")
+                raise HTTPException(
+                    status_code=404, detail="Uno o más alumnos no encontrados"
+                )
             incidente.alumnos = alumnos
 
     # Actualizar otros campos

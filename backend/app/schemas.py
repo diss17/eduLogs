@@ -1,7 +1,8 @@
-from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
-from typing import Optional, List
 from enum import Enum
+from typing import List, Optional
+
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class RoleEnum(str, Enum):
@@ -39,8 +40,7 @@ class UsuarioRead(UsuarioBase):
     id: int
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)  # ← this is required
 
 
 class UsuarioUpdate(BaseModel):
@@ -65,9 +65,7 @@ class AlumnoCreate(AlumnoBase):
 class AlumnoRead(AlumnoBase):
     id: int
     created_at: datetime
-
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)  # ← this is required
 
 
 class AlumnoUpdate(BaseModel):
@@ -96,15 +94,12 @@ class IncidenteRead(IncidenteBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)  # ← this is required
 
 
 class IncidenteWithAlumnos(IncidenteRead):
     alumnos: List[AlumnoRead] = []
-
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)  # ← this is required
 
 
 class IncidenteUpdate(BaseModel):
