@@ -1,7 +1,15 @@
-export default function SidebarItem({ icon, text, active }) {
+import { Link } from "react-router-dom";
+
+export default function SidebarItem({
+  icon,
+  text,
+  active,
+  to,
+}) {
   return (
-    <button
-      className={`flex items-center gap-4 px-5 py-4 rounded-2xl text-lg transition ${
+    <Link
+      to={to}
+      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base transition ${
         active
           ? "bg-blue-600 text-white"
           : "hover:bg-white/10 text-white"
@@ -9,6 +17,6 @@ export default function SidebarItem({ icon, text, active }) {
     >
       {icon}
       {text}
-    </button>
+    </Link>
   );
 }
