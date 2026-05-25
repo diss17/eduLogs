@@ -28,21 +28,12 @@ eduLogs/
 │   ├── SETUP.md             # Guía de instalación
 │   └── requirements.txt
 │
-├── frontend/         # App React + Vite (Sprint 2)
+├── frontend/         # App React + Vite
 │
 └── README.md
 ```
 
 ## Sprint 1: Backend + Base de Datos ✅
-
-### Completado:
-- ✅ Configuración de FastAPI con CORS
-- ✅ Modelos SQLAlchemy (Usuarios, Alumnos, Incidentes)
-- ✅ Integración con NeonDB (PostgreSQL serverless)
-- ✅ 18 Endpoints CRUD con relaciones M:N
-- ✅ Pydantic schemas para validación
-- ✅ Alembic para migraciones de BD
-- ✅ Scripts de validación y testing
 
 ### Endpoints (18 total):
 
@@ -97,6 +88,3 @@ Ver [backend/SETUP.md](backend/SETUP.md) para guía completa de instalación, co
 - Tests unitarios
 
 ---
-
-**Licencia**: MIT  
-**Creado**: Mayo 2026
