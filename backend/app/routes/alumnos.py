@@ -1,0 +1,83 @@
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+from app.database import get_db
+from app.models import Alumno, Incidente
+from app.schemas import AlumnoCreate, AlumnoRead, AlumnoUpdate, IncidenteRead
+
+router = APIRouter(prefix="/alumnos", tags=["alumnos"])
+
+
+@router.post("", response_model=AlumnoRead, status_code=201)
+def crear_alumno(alumno: AlumnoCreate, db: Session = Depends(get_db)):
+    """Crear un nuevo alumno."""
+    # Verificar que email no exista
+    db_alumno = db.query(Alumno).filter(Alumno.email == alumno.email).first()
+    if db_alumno:
+        raise HTTPException(status_code=400, detail="Email ya registrado")
+
+    db_alumno = Alumno(**alumno.model_dump())
+    db.add(db_alumno)
+    db.commit()
+    db.refresh(db_alumno)
+    return db_alumno
+
+
+@router.get("", response_model=list[AlumnoRead])
+def listar_alumnos(db: Session = Depends(get_db)):
+    """Listar todos los alumnos."""
+    alumnos = db.query(Alumno).all()
+    return alumnos
+
+
+@router.get("/{alumno_id}", response_model=AlumnoRead)
+def obtener_alumno(alumno_id: int, db: Session = Depends(get_db)):
+    """Obtener un alumno por ID."""
+    alumno = db.query(Alumno).filter(Alumno.id == alumno_id).first()
+    if not alumno:
+        raise HTTPException(status_code=404, detail="Alumno no encontrado")
+    return alumno
+
+
+@router.get("/{alumno_id}/incidentes", response_model=list[IncidenteRead])
+def obtener_incidentes_alumno(alumno_id: int, db: Session = Depends(get_db)):
+    """Obtener todos los incidentes de un alumno."""
+    alumno = db.query(Alumno).filter(Alumno.id == alumno_id).first()
+    if not alumno:
+        raise HTTPException(status_code=404, detail="Alumno no encontrado")
+
+    incidentes = db.query(Incidente).join(Incidente.alumnos).filter(Alumno.id == alumno_id).all()
+    return incidentes
+
+
+@router.put("/{alumno_id}", response_model=AlumnoRead)
+def actualizar_alumno(alumno_id: int, alumno_update: AlumnoUpdate, db: Session = Depends(get_db)):
+    """Actualizar un alumno."""
+    alumno = db.query(Alumno).filter(Alumno.id == alumno_id).first()
+    if not alumno:
+        raise HTTPException(status_code=404, detail="Alumno no encontrado")
+
+    # Verificar email único si se intenta cambiar
+    if alumno_update.email and alumno_update.email != alumno.email:
+        db_alumno = db.query(Alumno).filter(Alumno.email == alumno_update.email).first()
+        if db_alumno:
+            raise HTTPException(status_code=400, detail="Email ya registrado")
+
+    update_data = alumno_update.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(alumno, field, value)
+
+    db.commit()
+    db.refresh(alumno)
+    return alumno
+
+
+@router.delete("/{alumno_id}", status_code=204)
+def eliminar_alumno(alumno_id: int, db: Session = Depends(get_db)):
+    """Eliminar un alumno."""
+    alumno = db.query(Alumno).filter(Alumno.id == alumno_id).first()
+    if not alumno:
+        raise HTTPException(status_code=404, detail="Alumno no encontrado")
+
+    db.delete(alumno)
+    db.commit()
+    return None
