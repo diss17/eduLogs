@@ -1,8 +1,10 @@
-from sqlalchemy import Column, String, DateTime, ForeignKey, Enum, Table, Integer
+import enum
+from datetime import datetime
+
+from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, String, Table
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from datetime import datetime
-import enum
+
 from app.database import Base
 
 
@@ -29,8 +31,18 @@ class EstadoEnum(str, enum.Enum):
 incidente_alumnos = Table(
     "incidente_alumnos",
     Base.metadata,
-    Column("incidente_id", Integer, ForeignKey("incidentes.id", ondelete="CASCADE"), primary_key=True),
-    Column("alumno_id", Integer, ForeignKey("alumnos.id", ondelete="CASCADE"), primary_key=True),
+    Column(
+        "incidente_id",
+        Integer,
+        ForeignKey("incidentes.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    Column(
+        "alumno_id",
+        Integer,
+        ForeignKey("alumnos.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
 )
 
 
@@ -43,10 +55,14 @@ class Usuario(Base):
     apellido = Column(String(255), nullable=False)
     rol = Column(Enum(RoleEnum), default=RoleEnum.FUNCIONARIO, nullable=False)
     password_hash = Column(String(255), nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
     # Relationships
-    incidentes = relationship("Incidente", back_populates="funcionario", cascade="all, delete-orphan")
+    incidentes = relationship(
+        "Incidente", back_populates="funcionario", cascade="all, delete-orphan"
+    )
 
 
 class Alumno(Base):
@@ -57,14 +73,16 @@ class Alumno(Base):
     nombre = Column(String(255), nullable=False)
     apellido = Column(String(255), nullable=False)
     grado = Column(String(50), nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
     # Relationships
     incidentes = relationship(
         "Incidente",
         secondary=incidente_alumnos,
         back_populates="alumnos",
-        cascade="all, delete"
+        passive_deletes=True,  # ← let DB cascade handle it
     )
 
 
@@ -77,9 +95,18 @@ class Incidente(Base):
     categoria = Column(Enum(CategoriaEnum), nullable=False)
     estado = Column(Enum(EstadoEnum), default=EstadoEnum.ABIERTO, nullable=False)
     ubicacion = Column(String(255), nullable=False)
-    funcionario_id = Column(Integer, ForeignKey("usuarios.id", ondelete="SET NULL"), nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    funcionario_id = Column(
+        Integer, ForeignKey("usuarios.id", ondelete="SET NULL"), nullable=True
+    )
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
 
     # Relationships
     funcionario = relationship("Usuario", back_populates="incidentes")
@@ -87,5 +114,5 @@ class Incidente(Base):
         "Alumno",
         secondary=incidente_alumnos,
         back_populates="incidentes",
-        cascade="all, delete"
+        passive_deletes=True,  # ← let DB cascade handle it
     )
