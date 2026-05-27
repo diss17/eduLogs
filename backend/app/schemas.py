@@ -33,7 +33,7 @@ class UsuarioBase(BaseModel):
 
 
 class UsuarioCreate(UsuarioBase):
-    pass
+    password: str = Field(..., min_length=6, description="Contraseña en texto plano (se guardará hasheada)")
 
 
 class UsuarioRead(UsuarioBase):
@@ -109,3 +109,17 @@ class IncidenteUpdate(BaseModel):
     estado: Optional[EstadoEnum] = None
     ubicacion: Optional[str] = Field(None, min_length=1, max_length=255)
     alumno_ids: Optional[List[int]] = None
+
+
+# ==================== AUTH SCHEMAS ====================
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class LoginResponse(BaseModel):
+    id: int
+    email: str
+    nombre: str
+    apellido: str
+    rol: RoleEnum

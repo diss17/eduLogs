@@ -3,7 +3,7 @@ Software integral para manejar el control de incidentes a nivel institucional de
 
 ## Stack Tecnológico
 
-- **Frontend**: React + Vite
+- **Frontend**: React + Vite + TypeScript
 - **Backend**: FastAPI + SQLAlchemy
 - **Base de Datos**: NeonDB (PostgreSQL serverless)
 
@@ -17,74 +17,75 @@ eduLogs/
 │   │   ├── schemas.py       # DTOs Pydantic
 │   │   ├── database.py      # Conexión a BD
 │   │   ├── config.py        # Variables de entorno
+│   │   ├── auth_utils.py    # Hashing de contraseñas
 │   │   ├── main.py          # App principal
 │   │   └── routes/
+│   │       ├── auth.py      # Login
 │   │       ├── usuarios.py
 │   │       ├── alumnos.py
 │   │       └── incidentes.py
 │   ├── alembic/             # Migraciones
-│   ├── test_connection.py   # Test de BD
-│   ├── test_endpoints.py    # Test de endpoints
 │   ├── SETUP.md             # Guía de instalación
 │   └── requirements.txt
 │
 ├── frontend/         # App React + Vite
+│   ├── src/
+│   │   ├── api/             # Capa de conexión al backend
+│   │   │   ├── client.ts    # Cliente fetch base
+│   │   │   ├── auth.ts      # Llamadas de autenticación
+│   │   │   └── types.ts     # Tipos TypeScript
+│   │   ├── App.tsx          # Componente principal
+│   │   └── styles.css
+│   └── .env                 # VITE_API_URL (no commiteado)
 │
 └── README.md
 ```
 
 ## Sprint 1: Backend + Base de Datos ✅
 
-### Endpoints (18 total):
+### Endpoints (19 total):
 
 | Recurso | Endpoints |
 |---------|-----------|
+| **Auth** | POST /auth/login |
 | **Usuarios** | POST, GET, GET/{id}, PUT/{id}, DELETE/{id} |
 | **Alumnos** | CRUD + GET/{id}/incidentes ⭐ |
 | **Incidentes** | CRUD + GET/{id}/alumnos ⭐ + filtros |
 
+## Sprint 1: Frontend + Conexión ✅
+
+- Login funcional conectado al backend
+- Autenticación con bcrypt
+- Capa API tipada con TypeScript
+- Dashboard de bienvenida post-login
+
 ## Inicio Rápido
 
-### 1. Instalar dependencias
+### Backend
+
 ```bash
 cd backend
+py -3.12 -m venv venv
+source venv/Scripts/activate   # Git Bash
 pip install -r requirements.txt
-```
-
-### 2. Configurar NeonDB
-```bash
-cp .env.example .env
-# Edita .env con tu DATABASE_URL de NeonDB
-```
-
-### 3. Validar conexión
-```bash
-python test_connection.py
-```
-
-### 4. Ejecutar servidor
-```bash
+# Crear .env con DATABASE_URL de NeonDB
+alembic stamp 001_initial_schema
+alembic upgrade head
 uvicorn app.main:app --reload
 ```
 
-### 5. Acceder a Swagger
-**http://localhost:8000/docs**
+### Frontend
 
-### 6. Testear endpoints
 ```bash
-python test_endpoints.py
+cd frontend
+npm install
+# Crear .env con VITE_API_URL=http://localhost:8000
+npm run dev
 ```
+
+### Acceder a Swagger
+**http://localhost:8000/docs**
 
 ## Documentación Detallada
 
 Ver [backend/SETUP.md](backend/SETUP.md) para guía completa de instalación, configuración y uso.
-
-## Sprint 2: Frontend (Próximo)
-
-- React + Vite setup
-- Componentes de UI
-- Autenticación (JWT)
-- Integración con API
-- Tests unitarios
-
----

@@ -54,6 +54,7 @@ class Usuario(Base):
     nombre = Column(String(255), nullable=False)
     apellido = Column(String(255), nullable=False)
     rol = Column(Enum(RoleEnum), default=RoleEnum.FUNCIONARIO, nullable=False)
+    password_hash = Column(String(255), nullable=True)
     created_at = Column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
