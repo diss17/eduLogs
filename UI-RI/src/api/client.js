@@ -1,19 +1,14 @@
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
 
 export class ApiError extends Error {
-  constructor(
-    public readonly status: number,
-    message: string,
-  ) {
+  constructor(status, message) {
     super(message);
+    this.status = status;
     this.name = 'ApiError';
   }
 }
 
-export async function apiFetch<T>(
-  path: string,
-  options: RequestInit = {},
-): Promise<T> {
+export async function apiFetch(path, options = {}) {
   const response = await fetch(`${API_URL}${path}`, {
     headers: {
       'Content-Type': 'application/json',
@@ -27,5 +22,5 @@ export async function apiFetch<T>(
     throw new ApiError(response.status, body.detail ?? 'Error desconocido');
   }
 
-  return response.json() as Promise<T>;
+  return response.json();
 }

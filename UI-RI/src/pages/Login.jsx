@@ -1,58 +1,59 @@
-import { FormEvent, useState } from 'react';
-import { login } from './api/auth';
-import type { LoginResponse } from './api/types';
+import { useState } from 'react';
+//import { login } from '../api/auth';
+import { useNavigate } from "react-router-dom";
 
-type AppState = { view: 'login' } | { view: 'dashboard'; user: LoginResponse };
-
-function App() {
-  const [state, setState] = useState<AppState>({ view: 'login' });
+export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+   /* async function handleSubmit(event) {
+
     event.preventDefault();
+
     setError('');
     setLoading(true);
+
     try {
-      const user = await login({ email, password });
-      setState({ view: 'dashboard', user });
+
+        await login({ email, password });
+
+        navigate('/dashboard');
+
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al iniciar sesión');
+
+        setError(
+        err instanceof Error
+            ? err.message
+            : 'Error al iniciar sesión'
+        );
+
     } finally {
-      setLoading(false);
-    }
-  }
 
-  function handleLogout() {
-    setState({ view: 'login' });
-    setEmail('');
-    setPassword('');
+        setLoading(false);
+
+        }
+    }*/
+   
+    async function handleSubmit(event) {
+
+    event.preventDefault();
+
     setError('');
-  }
+    setLoading(true);
 
-  if (state.view === 'dashboard') {
-    const { user } = state;
-    return (
-      <main className="dashboard-page">
-        <header className="dashboard-header">
-          <h1 className="dashboard-brand">eduLogs</h1>
-          <button className="dashboard-logout" onClick={handleLogout}>
-            Cerrar sesión
-          </button>
-        </header>
+    // Simulación de carga
+    setTimeout(() => {
 
-        <section className="dashboard-welcome">
-          <p className="dashboard-greeting">Bienvenido/a,</p>
-          <h2 className="dashboard-name">
-            {user.nombre} {user.apellido}
-          </h2>
-          <span className="dashboard-role">{user.rol}</span>
-        </section>
-      </main>
-    );
-  }
+        setLoading(false);
+
+        navigate('/dashboard');
+
+    }, 1000);
+
+    }
 
   return (
     <main className="login-page">
@@ -101,5 +102,3 @@ function App() {
     </main>
   );
 }
-
-export default App;
