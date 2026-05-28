@@ -1,5 +1,5 @@
 import { useState } from 'react';
-//import { login } from '../api/auth';
+import { login } from '../api/auth';
 import { useNavigate } from "react-router-dom";
 
 export default function Login() {
@@ -9,51 +9,25 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-   /* async function handleSubmit(event) {
-
+  async function handleSubmit(event) {
     event.preventDefault();
-
     setError('');
     setLoading(true);
 
     try {
-
-        await login({ email, password });
-
-        navigate('/dashboard');
-
+      const user = await login({ email, password });
+      localStorage.setItem('user', JSON.stringify(user));
+      navigate('/dashboard');
     } catch (err) {
-
-        setError(
+      setError(
         err instanceof Error
-            ? err.message
-            : 'Error al iniciar sesión'
-        );
-
+          ? err.message
+          : 'Error al iniciar sesión'
+      );
     } finally {
-
-        setLoading(false);
-
-        }
-    }*/
-   
-    async function handleSubmit(event) {
-
-    event.preventDefault();
-
-    setError('');
-    setLoading(true);
-
-    // Simulación de carga
-    setTimeout(() => {
-
-        setLoading(false);
-
-        navigate('/dashboard');
-
-    }, 1000);
-
+      setLoading(false);
     }
+  }
 
   return (
     <main className="login-page">

@@ -26,9 +26,8 @@ export default function Dashboard() {
   const location = useLocation();
   const navigate = useNavigate();
   const handleLogout = () => {
-
+    localStorage.removeItem('user');
     navigate("/");
-
   };
 
   return (
