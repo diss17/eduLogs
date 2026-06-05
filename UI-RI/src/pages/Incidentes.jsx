@@ -1,19 +1,54 @@
 import { useState, useEffect } from 'react';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { registerLocale } from 'react-datepicker';
+import { es } from 'date-fns/locale';
 import { listarIncidentes, crearIncidente } from '../api/incidentes';
 
-const CATEGORIAS = ['bullying', 'violencia', 'inasistencia', 'otro'];
-const ESTADOS = ['abierto', 'en_progreso', 'cerrado'];
+registerLocale('es', es);
 
-const ESTADO_LABEL = {
-  abierto: 'Abierto',
-  en_progreso: 'En progreso',
-  cerrado: 'Cerrado',
+const CATEGORIAS = ['bullying', 'violencia', 'inasistencia', 'otro'];
+const UBICACIONES = [
+  'Patio principal',
+  'Sala de clases',
+  'Casino',
+  'Biblioteca',
+  'Gimnasio',
+  'Pasillo',
+  'Baños',
+  'Entrada',
+];
+/*Esto es por mientras, que ni intente conectarme a la base de datos*/
+const ALUMNOS = [
+  'Juan Pérez',
+  'María González',
+  'Carlos Soto',
+  'Fernanda Rojas',
+  'Diego Muñoz',
+  'Valentina Silva',
+  'Tomás Herrera',
+  'Camila Torres',
+];
+
+const GRAVEDADES = [
+  'leve',
+  'media',
+  'grave',
+  'muy grave',
+];
+
+const GRAVEDAD_LABEL = {
+  leve: 'Leve',
+  media: 'Media',
+  grave: 'Grave',
+  'muy grave': 'Muy grave',
 };
 
-const ESTADO_COLOR = {
-  abierto: '#dc2626',
-  en_progreso: '#d97706',
-  cerrado: '#16a34a',
+const GRAVEDAD_COLOR = {
+  leve: '#16a34a',
+  media: '#d97706',
+  grave: '#dc2626',
+  'muy grave': '#7f1d1d',
 };
 
 export default function Incidentes() {
@@ -22,13 +57,16 @@ export default function Incidentes() {
   const [mostrarForm, setMostrarForm] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState('');
+  const [busquedaAlumno, setBusquedaAlumno] = useState('');
+  const [alumnosSeleccionados, setAlumnosSeleccionados] = useState([]);
 
   const [form, setForm] = useState({
     titulo: '',
     descripcion: '',
-    categoria: 'otro',
-    estado: 'abierto',
+    categoria: '',
+    gravedad: '',
     ubicacion: '',
+    fecha_incidente: '',
   });
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -57,13 +95,26 @@ export default function Incidentes() {
     setEnviando(true);
     setError('');
 
+    if (alumnosSeleccionados.length === 0) {
+      setError('Debes seleccionar al menos un alumno involucrado.');
+      setEnviando(false);
+      return;
+}
+
     try {
       await crearIncidente({
         ...form,
         funcionario_id: user.id,
         alumno_ids: [],
       });
-      setForm({ titulo: '', descripcion: '', categoria: 'otro', estado: 'abierto', ubicacion: '' });
+      setForm({
+        titulo: '',
+        descripcion: '',
+        categoria: '',
+        gravedad: '',
+        ubicacion: '',
+        fecha_incidente: '',
+      });
       setMostrarForm(false);
       await cargarIncidentes();
     } catch (err) {
@@ -94,28 +145,178 @@ export default function Incidentes() {
             </label>
             <label style={styles.label}>
               Ubicación
-              <input name="ubicacion" value={form.ubicacion} onChange={handleChange} required style={styles.input} placeholder="Ej. Patio principal" />
+              <select
+                name="ubicacion"
+                value={form.ubicacion}
+                onChange={handleChange}
+                required
+                style={styles.input}
+              >
+
+                <option value="" disabled hidden>
+                  Seleccione una ubicación
+                </option>
+
+                {UBICACIONES.map((u) => (
+                  <option key={u} value={u}>
+                    {u}
+                  </option>
+                ))}
+              </select>
             </label>
           </div>
+
+          <label style={styles.label}>
+            Alumnos involucrados
+
+            <input
+              type="text"
+              value={busquedaAlumno}
+              onChange={(e) => setBusquedaAlumno(e.target.value)}
+              placeholder="Buscar alumno..."
+              style={styles.input}
+            />
+
+            {/* Sugerencias */}
+            {busquedaAlumno && (
+              <div style={styles.sugerencias}>
+                {ALUMNOS
+                  .filter(
+                    (a) =>
+                      a.toLowerCase().includes(busquedaAlumno.toLowerCase()) &&
+                      !alumnosSeleccionados.includes(a)
+                  )
+                  .map((alumno) => (
+                    <div
+                      key={alumno}
+                      style={styles.sugerenciaItem}
+                      onClick={() => {
+                        setAlumnosSeleccionados([
+                          ...alumnosSeleccionados,
+                          alumno,
+                        ]);
+                        setBusquedaAlumno('');
+                      }}
+                    >
+                      {alumno}
+                    </div>
+                  ))}
+              </div>
+            )}
+
+            {/* Seleccionados */}
+            <div style={styles.tagsContainer}>
+              {alumnosSeleccionados.map((alumno) => (
+                <div key={alumno} style={styles.tag}>
+                  {alumno}
+
+                  <button
+                    type="button"
+                    style={styles.tagButton}
+                    onClick={() =>
+                      setAlumnosSeleccionados(
+                        alumnosSeleccionados.filter(
+                          (a) => a !== alumno
+                        )
+                      )
+                    }
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          </label>          
 
           <label style={styles.label}>
             Descripción
             <textarea name="descripcion" value={form.descripcion} onChange={handleChange} required style={{ ...styles.input, minHeight: '80px', resize: 'vertical' }} placeholder="Describe el incidente..." />
           </label>
 
-          <div style={styles.grid2}>
+          <div style={styles.grid3}>
+
             <label style={styles.label}>
               Categoría
-              <select name="categoria" value={form.categoria} onChange={handleChange} style={styles.input}>
-                {CATEGORIAS.map(c => <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
+              <select
+                name="categoria"
+                value={form.categoria}
+                onChange={handleChange}
+                required
+                style={styles.input}
+              >
+
+                <option value="" disabled>
+                  Seleccionar categoría
+                </option>
+
+                {CATEGORIAS.map((c) => (
+                  <option key={c} value={c}>
+                    {c.charAt(0).toUpperCase() + c.slice(1)}
+                  </option>
+                ))}
               </select>
             </label>
+
             <label style={styles.label}>
-              Estado
-              <select name="estado" value={form.estado} onChange={handleChange} style={styles.input}>
-                {ESTADOS.map(e => <option key={e} value={e}>{ESTADO_LABEL[e]}</option>)}
+              Gravedad
+              <select
+                name="gravedad"
+                value={form.gravedad}
+                onChange={handleChange}
+                required
+                style={styles.input}
+                required
+              >
+
+                <option value="" disabled>
+                  Seleccionar nivel de gravedad
+                </option>
+
+                {GRAVEDADES.map((g) => (
+                  <option key={g} value={g}>
+                    {GRAVEDAD_LABEL[g]}
+                  </option>
+                ))}
               </select>
             </label>
+
+            <label style={styles.label}>
+              Fecha del incidente
+
+              <DatePicker
+                selected={
+                  form.fecha_incidente
+                    ? new Date(form.fecha_incidente)
+                    : null
+                }
+                onChange={(date) =>
+                  setForm({
+                    ...form,
+                    fecha_incidente: date
+                      ? date.toISOString().split('T')[0]
+                      : '',
+                  })
+                }
+                dateFormat="dd/MM/yyyy"
+                placeholderText="Seleccione fecha"
+                minDate={
+                  new Date(
+                    new Date().getFullYear(),
+                    new Date().getMonth() - 1,
+                    1
+                  )
+                }
+                maxDate={new Date()}
+                locale={es}
+                required
+                wrapperClassName="w-full"
+                customInput={
+                  <input style={styles.input} />
+                }
+              />
+
+            </label>
+
           </div>
 
           {error && <p style={styles.error}>{error}</p>}
@@ -143,8 +344,8 @@ export default function Incidentes() {
                     {inc.categoria} · {inc.ubicacion}
                   </p>
                 </div>
-                <span style={{ ...styles.badge, backgroundColor: ESTADO_COLOR[inc.estado] + '20', color: ESTADO_COLOR[inc.estado] }}>
-                  {ESTADO_LABEL[inc.estado]}
+                <span style={{ ...styles.badge, backgroundColor: GRAVEDAD_COLOR[inc.gravedad] + '20', color: GRAVEDAD_COLOR[inc.gravedad] }}>
+                  {GRAVEDAD_LABEL[inc.gravedad]}
                 </span>
               </div>
             </div>
@@ -181,6 +382,11 @@ const styles = {
     gridTemplateColumns: '1fr 1fr',
     gap: '1rem',
   },
+  grid3: {
+  display: 'grid',
+  gridTemplateColumns: '1fr 1fr 1fr',
+  gap: '1rem',
+  },
   label: {
     display: 'flex',
     flexDirection: 'column',
@@ -211,6 +417,42 @@ const styles = {
     fontWeight: '600',
     whiteSpace: 'nowrap',
   },
+  tag: {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '0.55rem',
+  background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
+  color: '#ffffff',
+  padding: '0.45rem 0.9rem',
+  borderRadius: '999px',
+  fontSize: '0.85rem',
+  fontWeight: '600',
+  boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)',
+  },
+
+  tagsContainer: {
+  display: 'flex',
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  gap: '0.6rem',
+  marginTop: '0.9rem',
+  },
+tagButton: {
+  border: 'none',
+  background: 'rgba(255,255,255,0.2)',
+  color: '#fff',
+  width: '20px',
+  height: '20px',
+  borderRadius: '50%',
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontWeight: '700',
+  fontSize: '0.85rem',
+  padding: 0,
+  },
+
   error: {
     padding: '0.75rem',
     background: '#fef2f2',
