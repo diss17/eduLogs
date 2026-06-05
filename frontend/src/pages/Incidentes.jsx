@@ -34,21 +34,21 @@ const GRAVEDADES = [
   'leve',
   'media',
   'grave',
-  'muy grave',
+  'muy_grave',
 ];
 
 const GRAVEDAD_LABEL = {
   leve: 'Leve',
   media: 'Media',
   grave: 'Grave',
-  'muy grave': 'Muy grave',
+  'muy_grave': 'Muy grave',
 };
 
 const GRAVEDAD_COLOR = {
   leve: '#16a34a',
   media: '#d97706',
   grave: '#dc2626',
-  'muy grave': '#7f1d1d',
+  'muy_grave': '#7f1d1d',
 };
 
 export default function Incidentes() {

@@ -24,6 +24,13 @@ class EstadoEnum(str, Enum):
     CERRADO = "cerrado"
 
 
+class GravedadEnum(str, Enum):
+    LEVE = "leve"
+    MEDIA = "media"
+    GRAVE = "grave"
+    MUY_GRAVE = "muy_grave"
+
+
 # ==================== USUARIO SCHEMAS ====================
 class UsuarioBase(BaseModel):
     email: EmailStr
@@ -82,6 +89,8 @@ class IncidenteBase(BaseModel):
     categoria: CategoriaEnum
     estado: EstadoEnum = EstadoEnum.ABIERTO
     ubicacion: str = Field(..., min_length=1, max_length=255)
+    gravedad: Optional[GravedadEnum] = None
+    fecha_incidente: Optional[datetime] = None
     funcionario_id: int
 
 
@@ -108,6 +117,8 @@ class IncidenteUpdate(BaseModel):
     categoria: Optional[CategoriaEnum] = None
     estado: Optional[EstadoEnum] = None
     ubicacion: Optional[str] = Field(None, min_length=1, max_length=255)
+    gravedad: Optional[GravedadEnum] = None
+    fecha_incidente: Optional[datetime] = None
     alumno_ids: Optional[List[int]] = None
 
 
