@@ -33,6 +33,8 @@ def crear_incidente(incidente: IncidenteCreate, db: Session = Depends(get_db)):
         categoria=incidente.categoria,
         estado=incidente.estado,
         ubicacion=incidente.ubicacion,
+        gravedad=incidente.gravedad,
+        fecha_incidente=incidente.fecha_incidente,
         funcionario_id=incidente.funcionario_id,
     )
 

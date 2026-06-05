@@ -27,6 +27,13 @@ class EstadoEnum(str, enum.Enum):
     CERRADO = "cerrado"
 
 
+class GravedadEnum(str, enum.Enum):
+    LEVE = "leve"
+    MEDIA = "media"
+    GRAVE = "grave"
+    MUY_GRAVE = "muy_grave"
+
+
 # Association table for many-to-many relationship between Incidentes and Alumnos
 incidente_alumnos = Table(
     "incidente_alumnos",
@@ -95,6 +102,8 @@ class Incidente(Base):
     categoria = Column(Enum(CategoriaEnum), nullable=False)
     estado = Column(Enum(EstadoEnum), default=EstadoEnum.ABIERTO, nullable=False)
     ubicacion = Column(String(255), nullable=False)
+    gravedad = Column(Enum(GravedadEnum), nullable=True)
+    fecha_incidente = Column(DateTime(timezone=True), nullable=True)
     funcionario_id = Column(
         Integer, ForeignKey("usuarios.id", ondelete="SET NULL"), nullable=True
     )
