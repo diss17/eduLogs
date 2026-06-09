@@ -61,7 +61,21 @@ eduLogs/
 
 ## Inicio Rápido
 
-### Backend
+### Ejecución unificada (recomendado)
+
+```bash
+npm install              # Instala concurrently (solo la primera vez)
+npm run install:frontend # Instala dependencias del frontend
+npm run dev              # Arranca backend y frontend simultáneamente
+```
+
+Esto levanta:
+- **Backend** en http://localhost:8000
+- **Frontend** en http://localhost:5173
+
+### Setup individual
+
+#### Backend
 
 ```bash
 cd backend
@@ -71,16 +85,15 @@ pip install -r requirements.txt
 # Crear .env con DATABASE_URL de NeonDB
 alembic stamp 001_initial_schema
 alembic upgrade head
-uvicorn app.main:app --reload
+npm run dev:backend            # Desde la raíz del proyecto
 ```
 
-### Frontend
+#### Frontend
 
 ```bash
-cd frontend
-npm install
-# Crear .env con VITE_API_URL=http://localhost:8000
-npm run dev
+npm run install:frontend
+# Crear frontend/.env con VITE_API_URL=http://localhost:8000
+npm run dev:frontend           # Desde la raíz del proyecto
 ```
 
 ### Acceder a Swagger
