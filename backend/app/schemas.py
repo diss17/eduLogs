@@ -91,7 +91,7 @@ class IncidenteBase(BaseModel):
     ubicacion: str = Field(..., min_length=1, max_length=255)
     gravedad: Optional[GravedadEnum] = None
     fecha_incidente: Optional[datetime] = None
-    funcionario_id: int
+    funcionario_id: Optional[int] = None
 
 
 class IncidenteCreate(IncidenteBase):

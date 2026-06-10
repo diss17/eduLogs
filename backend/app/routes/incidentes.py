@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -25,22 +25,16 @@ _write_access = require_roles([RoleEnum.ADMIN, RoleEnum.FUNCIONARIO])
 def crear_incidente(
     incidente: IncidenteCreate,
     db: Session = Depends(get_db),
-    current_user: Usuario = Depends(_write_access),
+    current_user: Usuario = Depends(_any_authenticated),
 ):
-    """Crear un nuevo incidente. Requiere rol ADMIN o FUNCIONARIO."""
+    """Crear un nuevo incidente. Requiere autenticación. Si no se envía `funcionario_id`, se asigna el usuario actual."""
+    # Determinar el funcionario responsable
+    funcionario_id = incidente.funcionario_id if incidente.funcionario_id is not None else current_user.id
+
     # Verificar que el funcionario existe
-    funcionario = (
-        db.query(Usuario).filter(Usuario.id == incidente.funcionario_id).first()
-    )
+    funcionario = db.query(Usuario).filter(Usuario.id == funcionario_id).first()
     if not funcionario:
         raise HTTPException(status_code=404, detail="Funcionario no encontrado")
-
-    # Un FUNCIONARIO solo puede crear incidentes a su nombre
-    if current_user.rol == RoleEnum.FUNCIONARIO and incidente.funcionario_id != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Solo puede crear incidentes a su propio nombre",
-        )
 
     # Crear incidente
     db_incidente = Incidente(
@@ -51,7 +45,7 @@ def crear_incidente(
         ubicacion=incidente.ubicacion,
         gravedad=incidente.gravedad,
         fecha_incidente=incidente.fecha_incidente,
-        funcionario_id=incidente.funcionario_id,
+        funcionario_id=funcionario_id,
     )
 
     # Asociar alumnos si se proporcionan IDs
@@ -76,11 +70,11 @@ def listar_incidentes(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(_any_authenticated),
 ):
-    """Listar incidentes. PROFESOR solo ve incidentes; FUNCIONARIO ve solo los suyos; ADMIN ve todos."""
+    """Listar incidentes. FUNCIONARIO y PROFESOR solo ven los suyos; ADMIN ve todos."""
     query = db.query(Incidente)
 
-    # FUNCIONARIO solo ve sus propios incidentes
-    if current_user.rol == RoleEnum.FUNCIONARIO:
+    # FUNCIONARIO y PROFESOR solo ven sus propios incidentes
+    if current_user.rol in (RoleEnum.FUNCIONARIO, RoleEnum.PROFESOR):
         query = query.filter(Incidente.funcionario_id == current_user.id)
 
     if categoria:
@@ -99,13 +93,13 @@ def obtener_incidente(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(_any_authenticated),
 ):
-    """Obtener un incidente por ID. FUNCIONARIO solo puede ver los suyos."""
+    """Obtener un incidente por ID. FUNCIONARIO y PROFESOR solo pueden ver los suyos."""
     incidente = db.query(Incidente).filter(Incidente.id == incidente_id).first()
     if not incidente:
         raise HTTPException(status_code=404, detail="Incidente no encontrado")
 
-    # FUNCIONARIO solo puede ver sus propios incidentes
-    if current_user.rol == RoleEnum.FUNCIONARIO and incidente.funcionario_id != current_user.id:
+    # FUNCIONARIO y PROFESOR solo pueden ver sus propios incidentes
+    if current_user.rol in (RoleEnum.FUNCIONARIO, RoleEnum.PROFESOR) and incidente.funcionario_id != current_user.id:
         raise HTTPException(status_code=403, detail="No tiene permisos para ver este incidente")
 
     return incidente
@@ -117,13 +111,13 @@ def obtener_alumnos_incidente(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(_any_authenticated),
 ):
-    """Obtener los alumnos de un incidente. Requiere autenticación."""
+    """Obtener los alumnos de un incidente. Requiere autenticación. FUNCIONARIO y PROFESOR solo pueden ver los suyos."""
     incidente = db.query(Incidente).filter(Incidente.id == incidente_id).first()
     if not incidente:
         raise HTTPException(status_code=404, detail="Incidente no encontrado")
 
-    # FUNCIONARIO solo puede ver alumnos de sus propios incidentes
-    if current_user.rol == RoleEnum.FUNCIONARIO and incidente.funcionario_id != current_user.id:
+    # FUNCIONARIO y PROFESOR solo pueden ver alumnos de sus propios incidentes
+    if current_user.rol in (RoleEnum.FUNCIONARIO, RoleEnum.PROFESOR) and incidente.funcionario_id != current_user.id:
         raise HTTPException(status_code=403, detail="No tiene permisos para ver este incidente")
 
     return incidente.alumnos
