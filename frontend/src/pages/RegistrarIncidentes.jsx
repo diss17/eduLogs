@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { registerLocale } from 'react-datepicker';
@@ -52,9 +52,6 @@ const GRAVEDAD_COLOR = {
 };
 
 export default function Incidentes() {
-  const [incidentes, setIncidentes] = useState([]);
-  const [cargando, setCargando] = useState(true);
-  const [mostrarForm, setMostrarForm] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState('');
   const [busquedaAlumno, setBusquedaAlumno] = useState('');
@@ -70,21 +67,6 @@ export default function Incidentes() {
   });
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
-
-  useEffect(() => {
-    cargarIncidentes();
-  }, []);
-
-  async function cargarIncidentes() {
-    try {
-      const data = await listarIncidentes();
-      setIncidentes(data);
-    } catch {
-      setError('No se pudieron cargar los incidentes.');
-    } finally {
-      setCargando(false);
-    }
-  }
 
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -115,7 +97,6 @@ export default function Incidentes() {
         ubicacion: '',
         fecha_incidente: '',
       });
-      setMostrarForm(false);
       await cargarIncidentes();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al crear el incidente');
@@ -126,17 +107,13 @@ export default function Incidentes() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-        <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#071b44' }}>Incidentes</h2>
-        <button onClick={() => setMostrarForm(!mostrarForm)} style={styles.btnPrimary}>
-          {mostrarForm ? 'Cancelar' : '+ Nuevo incidente'}
-        </button>
+      <div style={{ marginBottom: '1.5rem' }}>
+        <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#071b44' }}>Registre el Incidente</h2>
       </div>
 
       {/* Formulario */}
-      {mostrarForm && (
         <form onSubmit={handleSubmit} style={styles.form}>
-          <h3 style={{ marginBottom: '1rem', fontWeight: '600', color: '#071b44' }}>Registrar incidente</h3>
+          <h3 style={{ marginBottom: '1rem', fontWeight: '600', color: '#071b44' }}>Llene el siguiente formulario</h3>
 
           <div style={styles.grid2}>
             <label style={styles.label}>
@@ -221,7 +198,6 @@ export default function Incidentes() {
                       )
                     }
                   >
-                    ×
                   </button>
                 </div>
               ))}
@@ -325,33 +301,6 @@ export default function Incidentes() {
             {enviando ? 'Guardando…' : 'Guardar incidente'}
           </button>
         </form>
-      )}
-
-      {/* Lista */}
-      {cargando ? (
-        <p style={{ color: '#64748b' }}>Cargando incidentes…</p>
-      ) : incidentes.length === 0 ? (
-        <p style={{ color: '#64748b' }}>No hay incidentes registrados.</p>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {incidentes.map(inc => (
-            <div key={inc.id} style={styles.card}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div>
-                  <h4 style={{ fontWeight: '600', color: '#071b44', marginBottom: '0.25rem' }}>{inc.titulo}</h4>
-                  <p style={{ color: '#475569', fontSize: '0.9rem' }}>{inc.descripcion}</p>
-                  <p style={{ color: '#94a3b8', fontSize: '0.8rem', marginTop: '0.5rem' }}>
-                    {inc.categoria} · {inc.ubicacion}
-                  </p>
-                </div>
-                <span style={{ ...styles.badge, backgroundColor: GRAVEDAD_COLOR[inc.gravedad] + '20', color: GRAVEDAD_COLOR[inc.gravedad] }}>
-                  {GRAVEDAD_LABEL[inc.gravedad]}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
