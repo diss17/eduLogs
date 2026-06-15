@@ -4,20 +4,10 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { registerLocale } from 'react-datepicker';
 import { es } from 'date-fns/locale';
 import { listarIncidentes, crearIncidente } from '../api/incidentes';
+import {CATEGORIAS, UBICACIONES, GRAVEDADES, GRAVEDAD_LABEL, GRAVEDAD_COLOR,} from '../constants/incidentes';
 
 registerLocale('es', es);
 
-const CATEGORIAS = ['bullying', 'violencia', 'inasistencia', 'otro'];
-const UBICACIONES = [
-  'Patio principal',
-  'Sala de clases',
-  'Casino',
-  'Biblioteca',
-  'Gimnasio',
-  'Pasillo',
-  'Baños',
-  'Entrada',
-];
 /*Esto es por mientras, que ni intente conectarme a la base de datos*/
 const ALUMNOS = [
   'Juan Pérez',
@@ -29,27 +19,6 @@ const ALUMNOS = [
   'Tomás Herrera',
   'Camila Torres',
 ];
-
-const GRAVEDADES = [
-  'leve',
-  'media',
-  'grave',
-  'muy_grave',
-];
-
-const GRAVEDAD_LABEL = {
-  leve: 'Leve',
-  media: 'Media',
-  grave: 'Grave',
-  'muy_grave': 'Muy grave',
-};
-
-const GRAVEDAD_COLOR = {
-  leve: '#16a34a',
-  media: '#d97706',
-  grave: '#dc2626',
-  'muy_grave': '#7f1d1d',
-};
 
 export default function Incidentes() {
   const [enviando, setEnviando] = useState(false);

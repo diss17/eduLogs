@@ -10,3 +10,10 @@ export async function crearIncidente(data) {
     body: JSON.stringify(data),
   });
 }
+
+export async function actualizarIncidente(id, data) {
+  return apiFetch(`/incidentes/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
