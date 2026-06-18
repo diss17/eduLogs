@@ -2,11 +2,11 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from app.routes.auth import router as auth_router
-from app.routes.usuarios import router as usuarios_router
-from app.routes.alumnos import router as alumnos_router
-from app.routes.incidentes import router as incidentes_router
 
+from app.routes.alumnos import router as alumnos_router
+from app.routes.auth import router as auth_router
+from app.routes.incidentes import router as incidentes_router
+from app.routes.usuarios import router as usuarios_router
 
 app = FastAPI(
     title="eduLogs API",

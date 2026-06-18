@@ -60,7 +60,7 @@ class Usuario(Base):
     email = Column(String(255), unique=True, index=True, nullable=False)
     nombre = Column(String(255), nullable=False)
     apellido = Column(String(255), nullable=False)
-    rol = Column(Enum(RoleEnum), default=RoleEnum.FUNCIONARIO, nullable=False)
+    rol = Column(Enum(RoleEnum, values_callable=lambda x: [e.value for e in x]), default=RoleEnum.FUNCIONARIO, nullable=False)
     password_hash = Column(String(255), nullable=True)
     created_at = Column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
@@ -99,10 +99,10 @@ class Incidente(Base):
     id = Column(Integer, primary_key=True, index=True)
     titulo = Column(String(255), nullable=False)
     descripcion = Column(String(2000), nullable=False)
-    categoria = Column(Enum(CategoriaEnum), nullable=False)
-    estado = Column(Enum(EstadoEnum), default=EstadoEnum.ABIERTO, nullable=False)
+    categoria = Column(Enum(CategoriaEnum, values_callable=lambda x: [e.value for e in x]), nullable=False)
+    estado = Column(Enum(EstadoEnum, values_callable=lambda x: [e.value for e in x]), default=EstadoEnum.ABIERTO, nullable=False)
     ubicacion = Column(String(255), nullable=False)
-    gravedad = Column(Enum(GravedadEnum), nullable=True)
+    gravedad = Column(Enum(GravedadEnum, values_callable=lambda x: [e.value for e in x]), nullable=True)
     fecha_incidente = Column(DateTime(timezone=True), nullable=True)
     funcionario_id = Column(
         Integer, ForeignKey("usuarios.id", ondelete="SET NULL"), nullable=True
