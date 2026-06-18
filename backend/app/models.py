@@ -9,9 +9,9 @@ from app.database import Base
 
 
 class RoleEnum(str, enum.Enum):
-    ADMIN = "admin"
+    INSPECTOR = "inspector"
     PROFESOR = "profesor"
-    FUNCIONARIO = "funcionario"
+    PROFESOR_JEFE = "profesor_jefe"
 
 
 class CategoriaEnum(str, enum.Enum):
@@ -60,7 +60,7 @@ class Usuario(Base):
     email = Column(String(255), unique=True, index=True, nullable=False)
     nombre = Column(String(255), nullable=False)
     apellido = Column(String(255), nullable=False)
-    rol = Column(Enum(RoleEnum, values_callable=lambda x: [e.value for e in x]), default=RoleEnum.FUNCIONARIO, nullable=False)
+    rol = Column(Enum(RoleEnum, values_callable=lambda x: [e.value for e in x]), default=RoleEnum.PROFESOR, nullable=False)
     password_hash = Column(String(255), nullable=True)
     created_at = Column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
@@ -70,6 +70,20 @@ class Usuario(Base):
     incidentes = relationship(
         "Incidente", back_populates="funcionario", cascade="all, delete-orphan"
     )
+    jefaturas = relationship(
+        "ProfesorJefeCurso", cascade="all, delete-orphan", back_populates="usuario"
+    )
+
+
+class ProfesorJefeCurso(Base):
+    __tablename__ = "profesor_jefe_cursos"
+
+    usuario_id = Column(
+        Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), primary_key=True
+    )
+    grado = Column(String(50), primary_key=True)
+
+    usuario = relationship("Usuario", back_populates="jefaturas")
 
 
 class Alumno(Base):

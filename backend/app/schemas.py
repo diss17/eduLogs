@@ -6,9 +6,9 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class RoleEnum(str, Enum):
-    ADMIN = "admin"
+    INSPECTOR = "inspector"
     PROFESOR = "profesor"
-    FUNCIONARIO = "funcionario"
+    PROFESOR_JEFE = "profesor_jefe"
 
 
 class CategoriaEnum(str, Enum):
@@ -36,7 +36,7 @@ class UsuarioBase(BaseModel):
     email: EmailStr
     nombre: str = Field(..., min_length=1, max_length=255)
     apellido: str = Field(..., min_length=1, max_length=255)
-    rol: RoleEnum = RoleEnum.FUNCIONARIO
+    rol: RoleEnum = RoleEnum.PROFESOR
 
 
 class UsuarioCreate(UsuarioBase):
@@ -136,3 +136,13 @@ class LoginResponse(BaseModel):
     nombre: str
     apellido: str
     rol: RoleEnum
+
+
+# ==================== JEFATURA SCHEMAS ====================
+class JefaturaCreate(BaseModel):
+    grado: str = Field(..., min_length=1, max_length=50)
+
+
+class JefaturaRead(BaseModel):
+    grado: str
+    model_config = ConfigDict(from_attributes=True)

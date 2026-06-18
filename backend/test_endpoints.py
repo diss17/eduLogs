@@ -98,7 +98,7 @@ def test_crear_funcionario(admin_token):
         "email": f"funcionario_{suffix}@example.com",
         "nombre": "Funcionario",
         "apellido": "Test",
-        "rol": "funcionario",
+        "rol": "profesor",
         "password": "funcionario123",
     }
     resp = requests.post(
