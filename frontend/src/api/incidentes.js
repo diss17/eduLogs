@@ -1,7 +1,10 @@
 import { apiFetch } from './client';
 
-export async function listarIncidentes() {
-  return apiFetch('/incidentes');
+export async function listarIncidentes({ categoria } = {}) {
+  const params = new URLSearchParams();
+  if (categoria) params.set('categoria', categoria);
+  const query = params.toString() ? `?${params}` : '';
+  return apiFetch(`/incidentes${query}`);
 }
 
 export async function crearIncidente(data) {

@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
 import { listarIncidentes, actualizarIncidente } from '../api/incidentes';
-import DatePicker from 'react-datepicker';
+import DatePicker, { registerLocale } from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { registerLocale } from 'react-datepicker';
 import { es } from 'date-fns/locale';
-import {CATEGORIAS, UBICACIONES, GRAVEDADES, GRAVEDAD_LABEL, GRAVEDAD_COLOR,} from '../constants/incidentes';
+import { CATEGORIAS, UBICACIONES, GRAVEDADES, GRAVEDAD_LABEL } from '../constants/incidentes';
 
 registerLocale('es', es);
 
@@ -15,13 +14,16 @@ export default function IncidentesRegistrados() {
   const [mostrarModal, setMostrarModal] = useState(false);
   const [incidenteEditando, setIncidenteEditando] = useState(null);
   const [mensajeExito, setMensajeExito] = useState('');
+  const [categoriaFiltro, setCategoriaFiltro] = useState('');
+
   useEffect(() => {
     cargarIncidentes();
-  }, []);
+  }, [categoriaFiltro]);
 
   async function cargarIncidentes() {
+    setCargando(true);
     try {
-      const data = await listarIncidentes();
+      const data = await listarIncidentes({ categoria: categoriaFiltro || undefined });
       setIncidentes(data);
     } finally {
       setCargando(false);
@@ -84,11 +86,26 @@ export default function IncidentesRegistrados() {
         </div>
       )}
 
-      {cargando ? (
-        <p>Cargando incidentes...</p>
-      ) : incidentes.length === 0 ? (
-        <p>No hay incidentes registrados.</p>
-      ) : (
+      <div style={{ marginBottom: '1.5rem' }}>
+        <select
+          className="edulogs-input"
+          value={categoriaFiltro}
+          onChange={(e) => setCategoriaFiltro(e.target.value)}
+          style={{ maxWidth: '220px' }}
+        >
+          <option value="">Todas las categorías</option>
+          {CATEGORIAS.map((c) => (
+            <option key={c} value={c}>
+              {c.charAt(0).toUpperCase() + c.slice(1)}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {(() => {
+        if (cargando) return <p>Cargando incidentes...</p>;
+        if (incidentes.length === 0) return <p>No hay incidentes registrados.</p>;
+        return (
         <div className="lista-incidentes">
 
           {incidentes.map((inc) => (
@@ -126,7 +143,8 @@ export default function IncidentesRegistrados() {
           ))}
 
         </div>
-      )}
+        );
+      })()}
       {mostrarModal && incidenteEditando && (
         <div className="modal-overlay">
 
@@ -194,7 +212,8 @@ export default function IncidentesRegistrados() {
             />
 
             <div style={{ marginTop: '1rem' }}>
-              <label
+                      <label
+                htmlFor="antecedentes"
                 style={{
                   display: 'block',
                   marginBottom: '0.5rem',
@@ -206,6 +225,7 @@ export default function IncidentesRegistrados() {
               </label>
 
               <textarea
+                id="antecedentes"
                 className="edulogs-textarea"
                 placeholder="Ingrese nuevos antecedentes del incidente..."
                 value={incidenteEditando.antecedentes || ''}

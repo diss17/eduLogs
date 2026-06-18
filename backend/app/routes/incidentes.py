@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db
 from app.models import Alumno, Incidente, Usuario
@@ -60,7 +60,7 @@ def listar_incidentes(
     db: Session = Depends(get_db),
 ):
     """Listar incidentes con filtros opcionales por categoría y estado."""
-    query = db.query(Incidente)
+    query = db.query(Incidente).options(selectinload(Incidente.alumnos))
 
     if categoria:
         query = query.filter(Incidente.categoria == categoria)
