@@ -1,210 +1,269 @@
+import { useEffect, useState } from "react";
+import { listarAlumnos } from "../api/alumnos";
+import { listarIncidentes } from "../api/incidentes";
+import { obtenerClima } from "../api/weather";
+
+function formatearFecha(date) {
+  return date.toLocaleDateString("es-CL", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+function formatearHora(date) {
+  return date.toLocaleTimeString("es-CL", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+}
+
+function obtenerSaludo() {
+  const hora = new Date().getHours();
+  if (hora < 12) return "Buenos días";
+  if (hora < 18) return "Buenas tardes";
+  return "Buenas noches";
+}
+
 export default function Inicio() {
+  const [ahora, setAhora] = useState(new Date());
+  const [totalAlumnos, setTotalAlumnos] = useState(null);
+  const [incidentesActivos, setIncidentesActivos] = useState(null);
+  const [clima, setClima] = useState(null);
+
+  const [ubicacionEstado, setUbicacionEstado] = useState(
+    navigator.geolocation ? "pidiendo" : "denegada",
+  );
+
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const nombre = user.nombre ?? "";
+
+  useEffect(() => {
+    const timer = setInterval(() => setAhora(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    listarAlumnos()
+      .then((data) => setTotalAlumnos(data.length))
+      .catch(() => setTotalAlumnos(0));
+  }, []);
+
+  useEffect(() => {
+    listarIncidentes()
+      .then((data) => {
+        const activos = data.filter(
+          (inc) => inc.estado === "abierto" || inc.estado === "en_progreso",
+        ).length;
+        setIncidentesActivos(activos);
+      })
+      .catch(() => setIncidentesActivos(0));
+  }, []);
+
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      obtenerClima().then(setClima);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUbicacionEstado("lista");
+        obtenerClima(pos.coords.latitude, pos.coords.longitude).then(setClima);
+      },
+      () => {
+        setUbicacionEstado("denegada");
+        obtenerClima().then(setClima);
+      },
+    );
+  }, []);
+
   return (
-    <div className="text-4xl font-bold text-[#071b44]">
-      Hola, estas en Inicio
+    <div>
+      {/* Header */}
+      <div className="page-card" style={{ marginBottom: "1.5rem" }}>
+        <h1
+          style={{
+            fontSize: "1.75rem",
+            fontWeight: 700,
+            color: "#071b44",
+            margin: "0 0 0.5rem",
+          }}
+        >
+          {obtenerSaludo()}
+          {nombre ? `, ${nombre}` : ""} 👋
+        </h1>
+        <div
+          style={{
+            color: "#64748b",
+            fontSize: "0.95rem",
+            display: "flex",
+            gap: "1.5rem",
+            flexWrap: "wrap",
+          }}
+        >
+          <span>📅 {formatearFecha(ahora)}</span>
+          <span>🕐 {formatearHora(ahora)}</span>
+        </div>
+      </div>
+
+      {/* Stats Grid */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+          gap: "1rem",
+        }}
+      >
+        {/* Alumnos */}
+        <div className="page-card" style={{ padding: "1.25rem" }}>
+          <div
+            style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}
+          >
+            <div
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 12,
+                background: "#eff6ff",
+                color: "#2563eb",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "1.25rem",
+              }}
+            >
+              👥
+            </div>
+            <div>
+              <div
+                style={{
+                  fontSize: "1.5rem",
+                  fontWeight: 700,
+                  color: "#0f172a",
+                }}
+              >
+                {totalAlumnos !== null ? totalAlumnos : "…"}
+              </div>
+              <div style={{ fontSize: "0.85rem", color: "#64748b" }}>
+                Alumnos
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Incidentes Activos */}
+        <div className="page-card" style={{ padding: "1.25rem" }}>
+          <div
+            style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}
+          >
+            <div
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 12,
+                background: "#fef2f2",
+                color: "#dc2626",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "1.25rem",
+              }}
+            >
+              ⚠️
+            </div>
+            <div>
+              <div
+                style={{
+                  fontSize: "1.5rem",
+                  fontWeight: 700,
+                  color: "#0f172a",
+                }}
+              >
+                {incidentesActivos !== null ? incidentesActivos : "…"}
+              </div>
+              <div style={{ fontSize: "0.85rem", color: "#64748b" }}>
+                Incidentes activos
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Clima */}
+        <div className="page-card" style={{ padding: "1.25rem" }}>
+          <div
+            style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}
+          >
+            <div
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 12,
+                background: "#fefce8",
+                color: "#ca8a04",
+                display: "flex",
+                alignItems: "center", justifyContent: "center",
+                fontSize: "1.25rem",
+              }}
+            >
+              🌤️
+            </div>
+            <div>
+              {clima?.error ? (
+                <div>
+                  <div style={{ fontSize: "0.85rem", fontWeight: 500, color: "#dc2626" }}>
+                    {clima.error}
+                  </div>
+                  <div style={{ fontSize: "0.85rem", color: "#64748b" }}>Clima</div>
+                </div>
+              ) : clima?.temperatura != null ? (
+                <>
+                  <div
+                    style={{
+                      fontSize: "1.5rem",
+                      fontWeight: 700,
+                      color: "#0f172a",
+                    }}
+                  >
+                    {clima.temperatura}°C
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "0.85rem",
+                      color: "#64748b",
+                      textTransform: "capitalize",
+                    }}
+                  >
+                    {clima.descripcion} · {clima.humedad}% HR
+                  </div>
+                </>
+              ) : ubicacionEstado === "pidiendo" ? (
+                <>
+                  <div style={{ fontSize: "0.85rem", fontWeight: 500, color: "#64748b" }}>
+                    Obteniendo ubicación…
+                  </div>
+                  <div style={{ fontSize: "0.85rem", color: "#64748b" }}>
+                    Clima
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{ fontSize: "0.85rem", fontWeight: 500, color: "#64748b" }}>
+                    {ubicacionEstado === "denegada"
+                      ? "Ubicación denegada · mostrando clima local"
+                      : "Cargando clima…"}
+                  </div>
+                  <div style={{ fontSize: "0.85rem", color: "#64748b" }}>
+                    Clima
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
-// import { useState, useEffect } from "react";
-// import DatePicker from "react-datepicker";
-// import "react-datepicker/dist/react-datepicker.css";
-// import { registerLocale } from "react-datepicker";
-// import { es } from "date-fns/locale";
-
-// import {
-//   CalendarDays,
-//   Save,
-// } from "lucide-react";
-
-// registerLocale("es", es);
-
-// export default function Inicio() {
-
-//   const [fecha, setFecha] = useState(null);
-//   const [alumno, setAlumno] = useState("");
-//   const [tipo, setTipo] = useState("");
-//   const [descripcion, setDescripcion] = useState("");
-//   const [mensaje, setMensaje] = useState("");
-
-//   const solicitarPermisoNotificaciones = async () => {
-//     if ("Notification" in window) {
-//       await Notification.requestPermission();
-//     }
-//   };
-
-//   useEffect(() => {
-//     solicitarPermisoNotificaciones();
-//   }, []);
-
-//   const guardarIncidente = () => {
-
-//     if (
-//       fecha !== null &&
-//       alumno.trim() !== "" &&
-//       tipo.trim() !== "" &&
-//       descripcion.trim() !== ""
-//     ) {
-
-//       setMensaje("Incidente registrado");
-
-//       setTimeout(() => {
-
-//         if (Notification.permission === "granted") {
-
-//           new Notification("Sistema Escolar", {
-//             body: "El incidente fue enviado correctamente a la base de datos.",
-//             icon: "https://cdn-icons-png.flaticon.com/512/1827/1827392.png",
-//           });
-
-//         }
-
-//       }, 1000);
-
-//     } else {
-
-//       setMensaje("Debe completar todos los campos");
-
-//     }
-//   };
-
-//   return (
-//     <section>
-//       <div className="mb-6">
-//         <h1 className="text-4xl font-bold text-[#071b44] mb-2">
-//           Registrar Incidente
-//         </h1>
-
-//         <p className="text-gray-500 text-lg">
-//           Complete la información del incidente ocurrido.
-//         </p>
-//       </div>
-
-//       <div className="bg-white rounded-2xl shadow-md p-7">
-
-//         {/* Fecha */}
-//         <div className="mb-6">
-
-//           <label className="block text-lg font-semibold mb-3">
-//             Fecha del incidente
-//           </label>
-
-//           <div className="relative max-w-xl">
-
-//             <DatePicker
-//               selected={fecha}
-//               onChange={(date) => setFecha(date)}
-//               dateFORMAT="dd/MM/yyyy"
-//               placeholderText="Seleccione una fecha"
-//               locale="es"
-//               className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base outline-none focus:border-blue-500"
-//             />
-
-//             <CalendarDays
-//               className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
-//               size={24}
-//             />
-
-//           </div>
-//         </div>
-
-//         {/* Alumno */}
-//         <div className="mb-6">
-
-//           <label className="block text-lg font-semibold mb-3">
-//             Nombre del alumno involucrado
-//           </label>
-
-//           <input
-//             type="text"
-//             placeholder="Ingrese el nombre completo del alumno"
-//             value={alumno}
-//             onChange={(e) => setAlumno(e.target.value)}
-//             className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base outline-none focus:border-blue-500"
-//           />
-
-//         </div>
-
-//         {/* Tipo */}
-//         <div className="mb-6">
-
-//           <label className="block text-lg font-semibold mb-3">
-//             Tipo de incidente
-//           </label>
-
-//           <select
-//             value={tipo}
-//             onChange={(e) => setTipo(e.target.value)}
-//             className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base text-gray-500 outline-none focus:border-blue-500"
-//           >
-
-//             <option value="">
-//               Seleccione el tipo de incidente
-//             </option>
-
-//             <option>Conducta</option>
-//             <option>Violencia</option>
-//             <option>Falta de respeto</option>
-//             <option>Daño a propiedad</option>
-
-//           </select>
-
-//         </div>
-
-//         {/* Descripción */}
-//         <div className="mb-8">
-
-//           <label className="block text-lg font-semibold mb-3">
-//             Descripción del incidente
-//           </label>
-
-//           <textarea
-//             rows="6"
-//             placeholder="Describa detalladamente lo ocurrido"
-//             value={descripcion}
-//             onChange={(e) => setDescripcion(e.target.value)}
-//             className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base outline-none resize-none focus:border-blue-500"
-//           ></textarea>
-
-//         </div>
-
-//         {/* Botones */}
-//         <div className="flex justify-end gap-4">
-
-//           <button className="px-7 py-3 rounded-xl border border-gray-300 text-base font-semibold hover:bg-gray-100 transition">
-//             Cancelar
-//           </button>
-
-//           <button
-//             onClick={guardarIncidente}
-//             className="px-7 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-base font-semibold flex items-center gap-3 transition"
-//           >
-
-//             <Save size={20} />
-
-//             Guardar incidente
-
-//           </button>
-
-//         </div>
-
-//         {/* Mensaje */}
-//         {mensaje && (
-
-//           <p
-//             className={`mt-5 text-center font-semibold text-lg ${
-//               mensaje === "Incidente registrado"
-//                 ? "text-green-600"
-//                 : "text-red-600"
-//             }`}
-//           >
-
-//             {mensaje}
-
-//           </p>
-
-//         )}
-
-//       </div>
-//     </section>
-//   );
-// }
