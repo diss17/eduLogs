@@ -1,30 +1,27 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { registerLocale } from 'react-datepicker';
 import { es } from 'date-fns/locale';
 import { listarIncidentes, crearIncidente } from '../api/incidentes';
+import { listarAlumnos } from '../api/alumnos';
 import {CATEGORIAS, UBICACIONES, GRAVEDADES, GRAVEDAD_LABEL, GRAVEDAD_COLOR,} from '../constants/incidentes';
 
 registerLocale('es', es);
 
-/*Esto es por mientras, que ni intente conectarme a la base de datos*/
-const ALUMNOS = [
-  'Juan Pérez',
-  'María González',
-  'Carlos Soto',
-  'Fernanda Rojas',
-  'Diego Muñoz',
-  'Valentina Silva',
-  'Tomás Herrera',
-  'Camila Torres',
-];
-
 export default function Incidentes() {
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState('');
+  const [alumnos, setAlumnos] = useState([]);
+  const [cargandoAlumnos, setCargandoAlumnos] = useState(true);
   const [busquedaAlumno, setBusquedaAlumno] = useState('');
   const [alumnosSeleccionados, setAlumnosSeleccionados] = useState([]);
+
+  useEffect(() => {
+    listarAlumnos()
+      .then(setAlumnos)
+      .finally(() => setCargandoAlumnos(false));
+  }, []);
 
   const [form, setForm] = useState({
     titulo: '',
@@ -56,7 +53,7 @@ export default function Incidentes() {
       await crearIncidente({
         ...form,
         funcionario_id: user.id,
-        alumno_ids: [],
+        alumno_ids: alumnosSeleccionados.map(a => a.id),
       });
       setForm({
         titulo: '',
@@ -124,17 +121,21 @@ export default function Incidentes() {
             />
 
             {/* Sugerencias */}
-            {busquedaAlumno && (
+            {busquedaAlumno && !cargandoAlumnos && (
               <div style={styles.sugerencias}>
-                {ALUMNOS
+                {alumnos
                   .filter(
-                    (a) =>
-                      a.toLowerCase().includes(busquedaAlumno.toLowerCase()) &&
-                      !alumnosSeleccionados.includes(a)
+                    (a) => {
+                      const nombreCompleto = `${a.nombre} ${a.apellido}`;
+                      return (
+                        nombreCompleto.toLowerCase().includes(busquedaAlumno.toLowerCase()) &&
+                        !alumnosSeleccionados.some((s) => s.id === a.id)
+                      );
+                    }
                   )
                   .map((alumno) => (
                     <div
-                      key={alumno}
+                      key={alumno.id}
                       style={styles.sugerenciaItem}
                       onClick={() => {
                         setAlumnosSeleccionados([
@@ -144,7 +145,7 @@ export default function Incidentes() {
                         setBusquedaAlumno('');
                       }}
                     >
-                      {alumno}
+                      {alumno.nombre} {alumno.apellido}
                     </div>
                   ))}
               </div>
@@ -153,8 +154,8 @@ export default function Incidentes() {
             {/* Seleccionados */}
             <div style={styles.tagsContainer}>
               {alumnosSeleccionados.map((alumno) => (
-                <div key={alumno} style={styles.tag}>
-                  {alumno}
+                <div key={alumno.id} style={styles.tag}>
+                  {alumno.nombre} {alumno.apellido}
 
                   <button
                     type="button"
@@ -162,7 +163,7 @@ export default function Incidentes() {
                     onClick={() =>
                       setAlumnosSeleccionados(
                         alumnosSeleccionados.filter(
-                          (a) => a !== alumno
+                          (a) => a.id !== alumno.id
                         )
                       )
                     }
