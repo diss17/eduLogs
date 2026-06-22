@@ -1,10 +1,12 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes.auth import router as auth_router
-from app.routes.usuarios import router as usuarios_router
-from app.routes.alumnos import router as alumnos_router
-from app.routes.incidentes import router as incidentes_router
+from fastapi.responses import JSONResponse
 
+from app.routes.alumnos import router as alumnos_router
+from app.routes.auth import router as auth_router
+from app.routes.incidentes import router as incidentes_router
+from app.routes.usuarios import router as usuarios_router
 
 app = FastAPI(
     title="eduLogs API",
@@ -20,6 +22,16 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Devuelve 400 en errores de validación de payload en lugar del 422 por defecto de FastAPI."""
+    return JSONResponse(
+        status_code=400,
+        content={"detail": exc.errors()},
+    )
+
 
 # Include routers
 app.include_router(auth_router)

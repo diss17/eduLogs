@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Usuario
 from app.schemas import LoginRequest, LoginResponse
-from app.auth_utils import verify_password
+from app.auth_utils import create_access_token, verify_password
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -27,7 +27,11 @@ def login(credentials: LoginRequest, db: Session = Depends(get_db)):
             detail="Credenciales incorrectas",
         )
 
+    # Generar token JWT
+    access_token = create_access_token(usuario.id, usuario.rol.value)
+
     return LoginResponse(
+        access_token=access_token,
         id=usuario.id,
         email=usuario.email,
         nombre=usuario.nombre,

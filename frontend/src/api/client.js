@@ -8,10 +8,22 @@ export class ApiError extends Error {
   }
 }
 
+function getAuthHeaders() {
+  const user = localStorage.getItem('user');
+  if (user) {
+    const { access_token } = JSON.parse(user);
+    if (access_token) {
+      return { Authorization: `Bearer ${access_token}` };
+    }
+  }
+  return {};
+}
+
 export async function apiFetch(path, options = {}) {
   const response = await fetch(`${API_URL}${path}`, {
     headers: {
       'Content-Type': 'application/json',
+      ...getAuthHeaders(),
       ...options.headers,
     },
     ...options,
