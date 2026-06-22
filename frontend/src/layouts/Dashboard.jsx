@@ -16,8 +16,8 @@ import {
 import SidebarItem from "../components/SidebarItem";
 
 import Inicio from "../pages/Inicio";
-import Incidentes from "../pages/Incidentes";
-import Reportes from "../pages/Reportes";
+import RegistrarIncidentes from "../pages/RegistrarIncidentes";
+import IncidentesRegistrados from "../pages/IncidentesRegistrados";
 import Alumnos from "../pages/Alumnos";
 import Configuracion from "../pages/Configuracion";
 
@@ -77,16 +77,16 @@ export default function Dashboard() {
 
               <SidebarItem
                 icon={<AlertTriangle size={20} />}
-                text="Incidentes"
-                to="/dashboard/incidentes"
-                active={location.pathname === "/dashboard/incidentes"}
+                text="Registrar Incidente"
+                to="/dashboard/registrar-incidente"
+                active={location.pathname === "/dashboard/registrar-incidente"}
               />
 
               <SidebarItem
                 icon={<BarChart3 size={20} />}
-                text="Reportes"
-                to="/dashboard/reportes"
-                active={location.pathname === "/dashboard/reportes"}
+                text="Incidentes Registrados"
+                to="/dashboard/incidentes-registrados"
+                active={location.pathname === "/dashboard/incidentes-registrados"}
               />
 
               <SidebarItem
@@ -138,13 +138,13 @@ export default function Dashboard() {
           />
 
           <Route
-            path="/incidentes"
-            element={<Incidentes />}
+            path="/registrar-incidente"
+            element={<RegistrarIncidentes />}
           />
 
           <Route
-            path="/reportes"
-            element={<Reportes />}
+            path="/incidentes-registrados"
+            element={<IncidentesRegistrados />}
           />
 
           <Route
