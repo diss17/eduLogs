@@ -279,6 +279,22 @@ input {
   cursor: pointer;
 }
 
+.edulogs-button-danger {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 0.7rem 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.edulogs-button-danger:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(220, 38, 38, 0.25);
+}
+
 .edulogs-input,
 .edulogs-select,
 .edulogs-textarea {
@@ -337,6 +353,27 @@ input {
   margin-top: 2rem;
 }
 
+.modal-actions-split {
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-actions-group {
+  display: flex;
+  gap: 1rem;
+}
+
+.modal-card-confirmation {
+  width: 460px;
+}
+
+.modal-confirmation-text {
+  margin: 0;
+  color: #475569;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
 .toast-success {
   position: fixed;
   top: 25px;
@@ -374,4 +411,156 @@ input {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.edulogs-button:disabled,
+.edulogs-button-secondary:disabled,
+.edulogs-button-danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.incident-card-actions {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.65rem;
+  padding-right: 0.5rem;
+}
+
+.incident-view-card {
+  width: 900px;
+}
+
+.incident-view-hero {
+  display: grid;
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+  padding: 1.35rem;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #eff6ff, #f8fbff);
+  border: 1px solid #dbeafe;
+}
+
+.incident-view-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.incident-view-eyebrow {
+  color: #2563eb;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.incident-view-title {
+  margin: 0;
+  color: #071b44;
+  font-size: 2rem;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+.incident-view-students {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.incident-description-panel {
+  margin-bottom: 1rem;
+  padding: 1.4rem;
+  border-radius: 20px;
+  background: #ffffff;
+  border: 1px solid #dbeafe;
+  box-shadow: 0 12px 28px rgba(37, 99, 235, 0.08);
+}
+
+.incident-description-panel p {
+  margin: 0;
+  color: #1e293b;
+  font-size: 1rem;
+  line-height: 1.8;
+}
+
+.incident-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.incident-detail-grid-compact {
+  gap: 0.8rem;
+}
+
+.incident-detail-item,
+.incident-detail-block {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1rem 1.1rem;
+}
+
+.incident-detail-block {
+  margin-bottom: 1rem;
+}
+
+.incident-detail-label {
+  display: block;
+  margin-bottom: 0.45rem;
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.incident-detail-item strong,
+.incident-detail-block p {
+  color: #071b44;
+}
+
+.incident-detail-item strong {
+  font-size: 0.95rem;
+}
+
+.incident-detail-block p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.incident-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.incident-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 0.85rem;
+  border-radius: 999px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+.incident-empty-text {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.incident-role-caption {
+  margin: 0.35rem 0 0;
+  color: #64748b;
+  font-size: 0.92rem;
 }

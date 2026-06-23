@@ -40,14 +40,14 @@ class UsuarioBase(BaseModel):
 
 
 class UsuarioCreate(UsuarioBase):
-    password: str = Field(..., min_length=6, description="Contraseña en texto plano (se guardará hasheada)")
+    password: str = Field(..., min_length=6, description="Contrasena en texto plano (se guardara hasheada)")
 
 
 class UsuarioRead(UsuarioBase):
     id: int
     created_at: datetime
 
-    model_config = ConfigDict(from_attributes=True)  # ← this is required
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UsuarioUpdate(BaseModel):
@@ -72,7 +72,7 @@ class AlumnoCreate(AlumnoBase):
 class AlumnoRead(AlumnoBase):
     id: int
     created_at: datetime
-    model_config = ConfigDict(from_attributes=True)  # ← this is required
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AlumnoUpdate(BaseModel):
@@ -103,12 +103,13 @@ class IncidenteRead(IncidenteBase):
     created_at: datetime
     updated_at: datetime
 
-    model_config = ConfigDict(from_attributes=True)  # ← this is required
+    model_config = ConfigDict(from_attributes=True)
 
 
 class IncidenteWithAlumnos(IncidenteRead):
     alumnos: List[AlumnoRead] = []
-    model_config = ConfigDict(from_attributes=True)  # ← this is required
+    funcionario: Optional[UsuarioRead] = None
+    model_config = ConfigDict(from_attributes=True)
 
 
 class IncidenteUpdate(BaseModel):
