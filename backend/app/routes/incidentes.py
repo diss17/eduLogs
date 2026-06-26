@@ -19,7 +19,7 @@ router = APIRouter(prefix="/incidentes", tags=["incidentes"])
 
 # Dependencias de rol
 _any_authenticated = get_current_user
-_write_access = require_roles([RoleEnum.INSPECTOR, RoleEnum.PROFESOR_JEFE])
+_write_access = require_roles([RoleEnum.INSPECTOR])
 
 
 def _mis_cursos(db: Session, user: Usuario) -> list[str]:
@@ -160,14 +160,10 @@ def actualizar_incidente(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(_write_access),
 ):
-    """Actualizar un incidente. PROFESOR_JEFE solo puede actualizar los suyos."""
+    """Actualizar un incidente. Solo INSPECTOR."""
     incidente = db.query(Incidente).filter(Incidente.id == incidente_id).first()
     if not incidente:
         raise HTTPException(status_code=404, detail="Incidente no encontrado")
-
-    # PROFESOR_JEFE solo puede actualizar sus propios incidentes
-    if current_user.rol == RoleEnum.PROFESOR_JEFE and incidente.funcionario_id != current_user.id:
-        raise HTTPException(status_code=403, detail="No tiene permisos para modificar este incidente")
 
     update_data = incidente_update.model_dump(exclude_unset=True)
 
@@ -197,14 +193,10 @@ def eliminar_incidente(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(_write_access),
 ):
-    """Eliminar un incidente. PROFESOR_JEFE solo puede eliminar los suyos."""
+    """Eliminar un incidente. Solo INSPECTOR."""
     incidente = db.query(Incidente).filter(Incidente.id == incidente_id).first()
     if not incidente:
         raise HTTPException(status_code=404, detail="Incidente no encontrado")
-
-    # PROFESOR_JEFE solo puede eliminar sus propios incidentes
-    if current_user.rol == RoleEnum.PROFESOR_JEFE and incidente.funcionario_id != current_user.id:
-        raise HTTPException(status_code=403, detail="No tiene permisos para eliminar este incidente")
 
     db.delete(incidente)
     db.commit()

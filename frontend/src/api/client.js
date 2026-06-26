@@ -34,5 +34,14 @@ export async function apiFetch(path, options = {}) {
     throw new ApiError(response.status, body.detail ?? 'Error desconocido');
   }
 
+  if (response.status === 204) {
+    return null;
+  }
+
+  const contentType = response.headers.get('content-type') ?? '';
+  if (!contentType.includes('application/json')) {
+    return null;
+  }
+
   return response.json();
 }

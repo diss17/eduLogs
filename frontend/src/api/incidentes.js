@@ -20,3 +20,9 @@ export async function actualizarIncidente(id, data) {
     body: JSON.stringify(data),
   });
 }
+
+export async function eliminarIncidente(id) {
+  return apiFetch(`/incidentes/${id}`, {
+    method: 'DELETE',
+  });
+}

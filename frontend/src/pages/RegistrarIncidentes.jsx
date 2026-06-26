@@ -3,7 +3,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { registerLocale } from 'react-datepicker';
 import { es } from 'date-fns/locale';
-import { listarIncidentes, crearIncidente } from '../api/incidentes';
+import { crearIncidente } from '../api/incidentes';
 import { listarAlumnos } from '../api/alumnos';
 import {CATEGORIAS, UBICACIONES, GRAVEDADES, GRAVEDAD_LABEL, GRAVEDAD_COLOR,} from '../constants/incidentes';
 
@@ -16,6 +16,7 @@ export default function Incidentes() {
   const [cargandoAlumnos, setCargandoAlumnos] = useState(true);
   const [busquedaAlumno, setBusquedaAlumno] = useState('');
   const [alumnosSeleccionados, setAlumnosSeleccionados] = useState([]);
+  const [mensajeExito, setMensajeExito] = useState('');
 
   useEffect(() => {
     listarAlumnos()
@@ -42,6 +43,7 @@ export default function Incidentes() {
     e.preventDefault();
     setEnviando(true);
     setError('');
+    setMensajeExito('');
 
     if (alumnosSeleccionados.length === 0) {
       setError('Debes seleccionar al menos un alumno involucrado.');
@@ -63,7 +65,12 @@ export default function Incidentes() {
         ubicacion: '',
         fecha_incidente: '',
       });
-      await cargarIncidentes();
+      setAlumnosSeleccionados([]);
+      setBusquedaAlumno('');
+      setMensajeExito('Incidente registrado correctamente');
+      setTimeout(() => {
+        setMensajeExito('');
+      }, 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al crear el incidente');
     } finally {
@@ -76,6 +83,12 @@ export default function Incidentes() {
       <div style={{ marginBottom: '1.5rem' }}>
         <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#071b44' }}>Registre el Incidente</h2>
       </div>
+
+      {mensajeExito && (
+        <div className="toast-success">
+          {mensajeExito}
+        </div>
+      )}
 
       {/* Formulario */}
         <form onSubmit={handleSubmit} style={styles.form}>
