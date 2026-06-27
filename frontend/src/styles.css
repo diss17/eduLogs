@@ -329,8 +329,10 @@ input {
 
 .modal-card {
   background: white;
-  width: 850px;
+  width: 950px;
   max-width: 95%;
+  max-height: 90vh;
+  overflow-y: auto;
   border-radius: 24px;
   padding: 2rem;
   box-shadow: 0 20px 60px rgba(15,23,42,.25);
@@ -432,7 +434,7 @@ input {
 }
 
 .incident-view-card {
-  width: 900px;
+  width: 1100px;
 }
 
 .incident-view-hero {

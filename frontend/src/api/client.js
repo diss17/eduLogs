@@ -9,7 +9,7 @@ export class ApiError extends Error {
 }
 
 function getAuthHeaders() {
-  const user = localStorage.getItem('user');
+  const user = sessionStorage.getItem('user');
   if (user) {
     const { access_token } = JSON.parse(user);
     if (access_token) {

@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { registerLocale } from 'react-datepicker';
 import { es } from 'date-fns/locale';
 import { crearIncidente } from '../api/incidentes';
-import { listarAlumnos } from '../api/alumnos';
+import { listarAlumnosParaRegistro } from '../api/alumnos';
 import {CATEGORIAS, UBICACIONES, GRAVEDADES, GRAVEDAD_LABEL, GRAVEDAD_COLOR,} from '../constants/incidentes';
 
 registerLocale('es', es);
@@ -17,12 +17,26 @@ export default function Incidentes() {
   const [busquedaAlumno, setBusquedaAlumno] = useState('');
   const [alumnosSeleccionados, setAlumnosSeleccionados] = useState([]);
   const [mensajeExito, setMensajeExito] = useState('');
+  const [dropdownAbierto, setDropdownAbierto] = useState(false);
+  const alumnoInputRef = useRef(null);
 
   useEffect(() => {
-    listarAlumnos()
+    listarAlumnosParaRegistro()
       .then(setAlumnos)
       .finally(() => setCargandoAlumnos(false));
   }, []);
+
+  useEffect(() => {
+    function handleClickFuera(e) {
+      if (alumnoInputRef.current && !alumnoInputRef.current.contains(e.target)) {
+        setDropdownAbierto(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickFuera);
+    return () => document.removeEventListener('mousedown', handleClickFuera);
+  }, []);
+
+  const norm = (s) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
   const [form, setForm] = useState({
     titulo: '',
@@ -33,7 +47,7 @@ export default function Incidentes() {
     fecha_incidente: '',
   });
 
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const user = JSON.parse(sessionStorage.getItem('user') || '{}');
 
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -125,66 +139,74 @@ export default function Incidentes() {
           <label style={styles.label}>
             Alumnos involucrados
 
-            <input
-              type="text"
-              value={busquedaAlumno}
-              onChange={(e) => setBusquedaAlumno(e.target.value)}
-              placeholder="Buscar alumno..."
-              style={styles.input}
-            />
+            <div ref={alumnoInputRef} style={{ position: 'relative' }}>
+              <input
+                type="text"
+                value={busquedaAlumno}
+                onChange={(e) => {
+                  setBusquedaAlumno(e.target.value);
+                  setDropdownAbierto(true);
+                }}
+                onFocus={() => busquedaAlumno && setDropdownAbierto(true)}
+                placeholder="Buscar por nombre, apellido o curso…"
+                style={styles.input}
+                autoComplete="off"
+              />
 
-            {/* Sugerencias */}
-            {busquedaAlumno && !cargandoAlumnos && (
-              <div style={styles.sugerencias}>
-                {alumnos
-                  .filter(
-                    (a) => {
-                      const nombreCompleto = `${a.nombre} ${a.apellido}`;
-                      return (
-                        nombreCompleto.toLowerCase().includes(busquedaAlumno.toLowerCase()) &&
-                        !alumnosSeleccionados.some((s) => s.id === a.id)
-                      );
-                    }
-                  )
-                  .map((alumno) => (
-                    <div
-                      key={alumno.id}
-                      style={styles.sugerenciaItem}
-                      onClick={() => {
-                        setAlumnosSeleccionados([
-                          ...alumnosSeleccionados,
-                          alumno,
-                        ]);
-                        setBusquedaAlumno('');
-                      }}
-                    >
-                      {alumno.nombre} {alumno.apellido}
-                    </div>
-                  ))}
-              </div>
-            )}
+              {dropdownAbierto && busquedaAlumno && !cargandoAlumnos && (() => {
+                const sugerencias = alumnos.filter((a) => {
+                  const texto = norm(`${a.nombre} ${a.apellido} ${a.grado}`);
+                  return texto.includes(norm(busquedaAlumno)) && !alumnosSeleccionados.some((s) => s.id === a.id);
+                });
+                return (
+                  <div style={styles.sugerencias}>
+                    {sugerencias.length === 0 ? (
+                      <div style={styles.sugerenciaVacia}>Sin resultados</div>
+                    ) : (
+                      sugerencias.map((alumno) => (
+                        <div
+                          key={alumno.id}
+                          style={styles.sugerenciaItem}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            setAlumnosSeleccionados([...alumnosSeleccionados, alumno]);
+                            setBusquedaAlumno('');
+                            setDropdownAbierto(false);
+                          }}
+                        >
+                          <span style={{ fontWeight: 600, color: '#0f172a' }}>
+                            {alumno.nombre} {alumno.apellido}
+                          </span>
+                          <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                            {alumno.grado}
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
 
             {/* Seleccionados */}
-            <div style={styles.tagsContainer}>
-              {alumnosSeleccionados.map((alumno) => (
-                <div key={alumno.id} style={styles.tag}>
-                  {alumno.nombre} {alumno.apellido}
-
-                  <button
-                    type="button"
-                    style={styles.tagButton}
-                    onClick={() =>
-                      setAlumnosSeleccionados(
-                        alumnosSeleccionados.filter(
-                          (a) => a.id !== alumno.id
-                        )
-                      )
-                    }
-                  >
-                  </button>
-                </div>
-              ))}
-            </div>
+            {alumnosSeleccionados.length > 0 && (
+              <div style={styles.tagsContainer}>
+                {alumnosSeleccionados.map((alumno) => (
+                  <div key={alumno.id} style={styles.tag}>
+                    {alumno.nombre} {alumno.apellido}
+                    <button
+                      type="button"
+                      style={styles.tagButton}
+                      onClick={() =>
+                        setAlumnosSeleccionados(alumnosSeleccionados.filter((a) => a.id !== alumno.id))
+                      }
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </label>          
 
           <label style={styles.label}>
@@ -385,6 +407,33 @@ tagButton: {
   padding: 0,
   },
 
+  sugerencias: {
+    position: 'absolute',
+    top: 'calc(100% + 4px)',
+    left: 0,
+    right: 0,
+    background: '#fff',
+    border: '1px solid #e2e8f0',
+    borderRadius: '10px',
+    boxShadow: '0 8px 24px rgba(0,0,0,0.10)',
+    zIndex: 50,
+    maxHeight: '220px',
+    overflowY: 'auto',
+  },
+  sugerenciaItem: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '0.6rem 0.9rem',
+    cursor: 'pointer',
+    borderBottom: '1px solid #f1f5f9',
+    transition: 'background 0.1s',
+  },
+  sugerenciaVacia: {
+    padding: '0.75rem 0.9rem',
+    color: '#94a3b8',
+    fontSize: '0.9rem',
+  },
   error: {
     padding: '0.75rem',
     background: '#fef2f2',

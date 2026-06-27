@@ -72,6 +72,7 @@ class AlumnoCreate(AlumnoBase):
 class AlumnoRead(AlumnoBase):
     id: int
     created_at: datetime
+    num_incidentes: int = 0
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -91,6 +92,7 @@ class IncidenteBase(BaseModel):
     ubicacion: str = Field(..., min_length=1, max_length=255)
     gravedad: Optional[GravedadEnum] = None
     fecha_incidente: Optional[datetime] = None
+    derivacion: Optional[str] = Field(None, max_length=2000)
     funcionario_id: Optional[int] = None
 
 
@@ -120,7 +122,21 @@ class IncidenteUpdate(BaseModel):
     ubicacion: Optional[str] = Field(None, min_length=1, max_length=255)
     gravedad: Optional[GravedadEnum] = None
     fecha_incidente: Optional[datetime] = None
+    derivacion: Optional[str] = Field(None, max_length=2000)
     alumno_ids: Optional[List[int]] = None
+
+
+# ==================== NOTA SCHEMAS ====================
+class NotaCreate(BaseModel):
+    contenido: str = Field(..., min_length=1, max_length=2000)
+
+
+class NotaRead(BaseModel):
+    id: int
+    contenido: str
+    created_at: datetime
+    autor: Optional[UsuarioRead] = None
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ==================== AUTH SCHEMAS ====================

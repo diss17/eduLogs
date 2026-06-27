@@ -36,3 +36,15 @@ export const GRAVEDAD_COLOR = {
   grave: '#dc2626',
   muy_grave: '#7f1d1d',
 };
+
+export const ESTADOS = [
+  'abierto',
+  'en_progreso',
+  'cerrado',
+];
+
+export const ESTADO_LABEL = {
+  abierto: 'Abierto',
+  en_progreso: 'En progreso',
+  cerrado: 'Cerrado',
+};

@@ -2,7 +2,6 @@ import {
   AlertTriangle,
   BarChart3,
   Users,
-  Settings,
   LogOut,
 } from "lucide-react";
 
@@ -19,14 +18,15 @@ import Inicio from "../pages/Inicio";
 import RegistrarIncidentes from "../pages/RegistrarIncidentes";
 import IncidentesRegistrados from "../pages/IncidentesRegistrados";
 import Alumnos from "../pages/Alumnos";
-import Configuracion from "../pages/Configuracion";
 
 export default function Dashboard() {
 
   const location = useLocation();
   const navigate = useNavigate();
+  const user = JSON.parse(sessionStorage.getItem('user') || '{}');
+  const esProfesor = user?.rol === 'profesor';
   const handleLogout = () => {
-    localStorage.removeItem('user');
+    sessionStorage.removeItem('user');
     navigate("/");
   };
 
@@ -89,19 +89,14 @@ export default function Dashboard() {
                 active={location.pathname === "/dashboard/incidentes-registrados"}
               />
 
-              <SidebarItem
-                icon={<Users size={20} />}
-                text="Alumnos"
-                to="/dashboard/alumnos"
-                active={location.pathname === "/dashboard/alumnos"}
-              />
-
-              <SidebarItem
-                icon={<Settings size={20} />}
-                text="Configuración"
-                to="/dashboard/configuracion"
-                active={location.pathname === "/dashboard/configuracion"}
-              />
+              {!esProfesor && (
+                <SidebarItem
+                  icon={<Users size={20} />}
+                  text="Alumnos"
+                  to="/dashboard/alumnos"
+                  active={location.pathname === "/dashboard/alumnos"}
+                />
+              )}
 
             </nav>
 
@@ -147,15 +142,12 @@ export default function Dashboard() {
             element={<IncidentesRegistrados />}
           />
 
-          <Route
-            path="/alumnos"
-            element={<Alumnos />}
-          />
-
-          <Route
-            path="/configuracion"
-            element={<Configuracion />}
-          />
+          {!esProfesor && (
+            <Route
+              path="/alumnos"
+              element={<Alumnos />}
+            />
+          )}
 
         </Routes>
 

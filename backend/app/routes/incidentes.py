@@ -3,7 +3,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Alumno, Incidente, ProfesorJefeCurso, RoleEnum, Usuario
+from app.models import Alumno, Incidente, Nota, ProfesorJefeCurso, RoleEnum, Usuario
 from app.schemas import (
     AlumnoRead,
     CategoriaEnum,
@@ -12,6 +12,8 @@ from app.schemas import (
     IncidenteRead,
     IncidenteUpdate,
     IncidenteWithAlumnos,
+    NotaCreate,
+    NotaRead,
 )
 from app.auth_utils import get_current_user, require_roles
 
@@ -201,3 +203,42 @@ def eliminar_incidente(
     db.delete(incidente)
     db.commit()
     return None
+
+
+# ==================== NOTAS ====================
+
+@router.get("/{incidente_id}/notas", response_model=list[NotaRead])
+def listar_notas(
+    incidente_id: int,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(_any_authenticated),
+):
+    """Listar notas de un incidente. Requiere poder ver el incidente."""
+    incidente = db.query(Incidente).filter(Incidente.id == incidente_id).first()
+    if not incidente:
+        raise HTTPException(status_code=404, detail="Incidente no encontrado")
+    if not _puede_ver_incidente(db, current_user, incidente):
+        raise HTTPException(status_code=403, detail="No tiene permisos para ver este incidente")
+    return incidente.notas
+
+
+@router.post("/{incidente_id}/notas", response_model=NotaRead, status_code=201)
+def agregar_nota(
+    incidente_id: int,
+    nota: NotaCreate,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(_any_authenticated),
+):
+    """Agregar una nota a un incidente. Solo INSPECTOR o PROFESOR_JEFE que pueda ver el incidente."""
+    if current_user.rol not in (RoleEnum.INSPECTOR, RoleEnum.PROFESOR_JEFE):
+        raise HTTPException(status_code=403, detail="No tiene permisos para agregar notas")
+    incidente = db.query(Incidente).filter(Incidente.id == incidente_id).first()
+    if not incidente:
+        raise HTTPException(status_code=404, detail="Incidente no encontrado")
+    if not _puede_ver_incidente(db, current_user, incidente):
+        raise HTTPException(status_code=403, detail="No tiene permisos para ver este incidente")
+    db_nota = Nota(incidente_id=incidente_id, autor_id=current_user.id, contenido=nota.contenido)
+    db.add(db_nota)
+    db.commit()
+    db.refresh(db_nota)
+    return db_nota

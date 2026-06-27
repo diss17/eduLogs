@@ -8,11 +8,15 @@ import {
   actualizarIncidente,
   eliminarIncidente,
 } from '../api/incidentes';
+import { listarNotas, agregarNota } from '../api/notas';
+import { listarJefaturas } from '../api/usuarios';
 import {
   CATEGORIAS,
   UBICACIONES,
   GRAVEDADES,
   GRAVEDAD_LABEL,
+  ESTADOS,
+  ESTADO_LABEL,
 } from '../constants/incidentes';
 
 registerLocale('es', es);
@@ -34,8 +38,12 @@ function obtenerNombreRol(rol) {
 }
 
 export default function IncidentesRegistrados() {
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const user = JSON.parse(sessionStorage.getItem('user') || '{}');
   const puedeEditar = ['admin', 'inspector'].includes(user?.rol);
+  const esProfesor = user?.rol === 'profesor';
+  const esProfesorJefe = user?.rol === 'profesor_jefe';
+
+  const [cursosJefe, setCursosJefe] = useState([]);
 
   const [incidentes, setIncidentes] = useState([]);
   const [cargando, setCargando] = useState(true);
@@ -46,11 +54,25 @@ export default function IncidentesRegistrados() {
   const [incidenteVisualizando, setIncidenteVisualizando] = useState(null);
   const [mensajeExito, setMensajeExito] = useState('');
   const [categoriaFiltro, setCategoriaFiltro] = useState('');
+  const [busqueda, setBusqueda] = useState('');
   const [eliminando, setEliminando] = useState(false);
+  const [notas, setNotas] = useState([]);
+  const [nuevaNota, setNuevaNota] = useState('');
+  const [enviandoNota, setEnviandoNota] = useState(false);
+
+  const puedeAgregarNota = ['inspector', 'profesor_jefe'].includes(user?.rol);
 
   useEffect(() => {
     cargarIncidentes();
   }, [categoriaFiltro]);
+
+  useEffect(() => {
+    if (esProfesorJefe && user?.id) {
+      listarJefaturas(user.id)
+        .then((jefaturas) => setCursosJefe(jefaturas.map((j) => j.grado)))
+        .catch(() => {});
+    }
+  }, [esProfesorJefe, user?.id]);
 
   async function cargarIncidentes() {
     setCargando(true);
@@ -76,12 +98,30 @@ export default function IncidentesRegistrados() {
 
   function abrirVisualizacion(incidente) {
     setIncidenteVisualizando(incidente);
+    setNotas([]);
+    setNuevaNota('');
     setMostrarModalVisualizacion(true);
+    listarNotas(incidente.id).then(setNotas).catch(() => {});
   }
 
   function cerrarVisualizacion() {
     setMostrarModalVisualizacion(false);
     setIncidenteVisualizando(null);
+    setNotas([]);
+    setNuevaNota('');
+  }
+
+  async function handleAgregarNota(e) {
+    e.preventDefault();
+    if (!nuevaNota.trim() || !incidenteVisualizando) return;
+    setEnviandoNota(true);
+    try {
+      const nota = await agregarNota(incidenteVisualizando.id, nuevaNota.trim());
+      setNotas((prev) => [...prev, nota]);
+      setNuevaNota('');
+    } finally {
+      setEnviandoNota(false);
+    }
   }
 
   async function guardarCambios() {
@@ -92,7 +132,9 @@ export default function IncidentesRegistrados() {
         categoria: incidenteEditando.categoria,
         ubicacion: incidenteEditando.ubicacion,
         gravedad: incidenteEditando.gravedad,
+        estado: incidenteEditando.estado,
         fecha_incidente: incidenteEditando.fecha_incidente,
+        derivacion: incidenteEditando.derivacion || null,
       });
 
       await cargarIncidentes();
@@ -145,7 +187,15 @@ export default function IncidentesRegistrados() {
         </div>
       )}
 
-      <div style={{ marginBottom: '1.5rem' }}>
+      <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+        <input
+          className="edulogs-input"
+          type="text"
+          placeholder="Buscar por título, descripción o ubicación…"
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          style={{ maxWidth: '360px' }}
+        />
         <select
           className="edulogs-input"
           value={categoriaFiltro}
@@ -162,11 +212,22 @@ export default function IncidentesRegistrados() {
       </div>
 
       {(() => {
+        const norm = (s) => (s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+        const q = norm(busqueda);
+        const filtrados = busqueda
+          ? incidentes.filter((inc) =>
+              norm(inc.titulo).includes(q) ||
+              norm(inc.descripcion).includes(q) ||
+              norm(inc.ubicacion).includes(q)
+            )
+          : incidentes;
+
         if (cargando) return <p>Cargando incidentes...</p>;
         if (incidentes.length === 0) return <p>No hay incidentes registrados.</p>;
+        if (filtrados.length === 0) return <p>Ningún incidente coincide con tu búsqueda.</p>;
         return (
           <div className="lista-incidentes">
-            {incidentes.map((inc) => (
+            {filtrados.map((inc) => (
               <div
                 key={inc.id}
                 className="page-card"
@@ -182,13 +243,43 @@ export default function IncidentesRegistrados() {
                   {inc.categoria} · {inc.ubicacion}
                 </small>
 
+                {inc.alumnos?.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.6rem' }}>
+                    {inc.alumnos.map((alumno) => (
+                      <span
+                        key={alumno.id}
+                        style={{
+                          padding: '0.2rem 0.6rem',
+                          borderRadius: '999px',
+                          background: '#eff6ff',
+                          color: '#2563eb',
+                          fontSize: '0.78rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {alumno.nombre} {alumno.apellido}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
                 <div className="incident-card-actions">
-                  <button
-                    onClick={() => abrirVisualizacion(inc)}
-                    className="edulogs-button-secondary"
-                  >
-                    Visualizar
-                  </button>
+                  {!esProfesor && !esProfesorJefe && (
+                    <button
+                      onClick={() => abrirVisualizacion(inc)}
+                      className="edulogs-button-secondary"
+                    >
+                      Visualizar
+                    </button>
+                  )}
+                  {esProfesorJefe && inc.alumnos?.some((a) => cursosJefe.includes(a.grado)) && (
+                    <button
+                      onClick={() => abrirVisualizacion(inc)}
+                      className="edulogs-button-secondary"
+                    >
+                      Visualizar
+                    </button>
+                  )}
 
                   {puedeEditar && (
                     <button
@@ -283,6 +374,66 @@ export default function IncidentesRegistrados() {
               </div>
             </div>
 
+            {incidenteVisualizando.derivacion && (
+              <div style={{ marginTop: '1.25rem', background: '#fefce8', border: '1px solid #fde68a', borderRadius: '10px', padding: '1rem' }}>
+                <span className="incident-detail-label" style={{ color: '#92400e' }}>Derivación</span>
+                <p style={{ margin: '0.4rem 0 0', color: '#78350f', fontSize: '0.9rem' }}>
+                  {incidenteVisualizando.derivacion}
+                </p>
+              </div>
+            )}
+
+            <div style={{ marginTop: '1.5rem', borderTop: '1px solid #e2e8f0', paddingTop: '1.25rem' }}>
+              <span className="incident-detail-label">Notas</span>
+
+              {notas.length === 0 ? (
+                <p className="incident-empty-text">Sin notas aún.</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.6rem' }}>
+                  {notas.map((nota) => (
+                    <div
+                      key={nota.id}
+                      style={{
+                        background: '#f8fafc',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '10px',
+                        padding: '0.75rem 1rem',
+                      }}
+                    >
+                      <p style={{ margin: '0 0 0.4rem', color: '#0f172a', fontSize: '0.9rem' }}>
+                        {nota.contenido}
+                      </p>
+                      <small style={{ color: '#94a3b8', fontSize: '0.78rem' }}>
+                        {nota.autor ? `${nota.autor.nombre} ${nota.autor.apellido}` : 'Desconocido'}
+                        {' · '}
+                        {formatearFecha(nota.created_at)}
+                      </small>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {puedeAgregarNota && (
+                <form onSubmit={handleAgregarNota} style={{ marginTop: '0.9rem', display: 'flex', gap: '0.5rem' }}>
+                  <input
+                    className="edulogs-input"
+                    type="text"
+                    placeholder="Escribir nota…"
+                    value={nuevaNota}
+                    onChange={(e) => setNuevaNota(e.target.value)}
+                    style={{ flex: 1 }}
+                  />
+                  <button
+                    type="submit"
+                    className="edulogs-button"
+                    disabled={enviandoNota || !nuevaNota.trim()}
+                  >
+                    {enviandoNota ? 'Guardando…' : 'Agregar'}
+                  </button>
+                </form>
+              )}
+            </div>
+
             <div className="modal-actions">
               <button
                 className="edulogs-button-secondary"
@@ -363,7 +514,7 @@ export default function IncidentesRegistrados() {
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: '1fr 1fr 1fr',
+                gridTemplateColumns: '1fr 1fr 1fr 1fr',
                 gap: '1rem',
                 marginTop: '1rem',
               }}
@@ -402,6 +553,23 @@ export default function IncidentesRegistrados() {
                 ))}
               </select>
 
+              <select
+                className="edulogs-input"
+                value={incidenteEditando.estado || ''}
+                onChange={(e) =>
+                  setIncidenteEditando({
+                    ...incidenteEditando,
+                    estado: e.target.value,
+                  })
+                }
+              >
+                {ESTADOS.map((s) => (
+                  <option key={s} value={s}>
+                    {ESTADO_LABEL[s]}
+                  </option>
+                ))}
+              </select>
+
               <DatePicker
                 selected={
                   incidenteEditando.fecha_incidente
@@ -428,6 +596,19 @@ export default function IncidentesRegistrados() {
                 maxDate={new Date()}
                 className="edulogs-input"
               />
+            </div>
+
+            <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '1rem', marginTop: '0.5rem' }}>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.9rem', color: '#334155', fontWeight: 600 }}>
+                Derivar
+                <textarea
+                  className="edulogs-textarea"
+                  placeholder="Escribe aquí la derivación (ej: derivar a psicólogo, citación de apoderado…)"
+                  value={incidenteEditando.derivacion || ''}
+                  onChange={(e) => setIncidenteEditando({ ...incidenteEditando, derivacion: e.target.value })}
+                  style={{ minHeight: '80px', resize: 'vertical', fontWeight: 400 }}
+                />
+              </label>
             </div>
 
             <div className="modal-actions modal-actions-split">

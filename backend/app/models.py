@@ -107,6 +107,19 @@ class Alumno(Base):
     )
 
 
+class Nota(Base):
+    __tablename__ = "notas"
+
+    id = Column(Integer, primary_key=True, index=True)
+    incidente_id = Column(Integer, ForeignKey("incidentes.id", ondelete="CASCADE"), nullable=False)
+    autor_id = Column(Integer, ForeignKey("usuarios.id", ondelete="SET NULL"), nullable=True)
+    contenido = Column(String(2000), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    incidente = relationship("Incidente", back_populates="notas")
+    autor = relationship("Usuario")
+
+
 class Incidente(Base):
     __tablename__ = "incidentes"
 
@@ -118,6 +131,7 @@ class Incidente(Base):
     ubicacion = Column(String(255), nullable=False)
     gravedad = Column(Enum(GravedadEnum, values_callable=lambda x: [e.value for e in x]), nullable=True)
     fecha_incidente = Column(DateTime(timezone=True), nullable=True)
+    derivacion = Column(String(2000), nullable=True)
     funcionario_id = Column(
         Integer, ForeignKey("usuarios.id", ondelete="SET NULL"), nullable=True
     )
@@ -137,5 +151,11 @@ class Incidente(Base):
         "Alumno",
         secondary=incidente_alumnos,
         back_populates="incidentes",
-        passive_deletes=True,  # ← let DB cascade handle it
+        passive_deletes=True,
+    )
+    notas = relationship(
+        "Nota",
+        back_populates="incidente",
+        cascade="all, delete-orphan",
+        order_by="Nota.created_at",
     )
